@@ -1,0 +1,17 @@
+{
+  "name": "ore-dashboard-filters",
+  "private": true,
+  "version": "0.1.2",
+  "author": {
+    "name": "Anthony Finnerty",
+    "url": "https://github.com/afinn3954"
+  },
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}
