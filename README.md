@@ -48,6 +48,6 @@ Back up the OJS database and existing plugin files before replacing an installat
 
 ## Author and licence
 
-**Anthony Finnerty**, 2026. Copyright © 2026 Anthony Finnerty.
+**Anthony Finnerty** Copyright © 2026 Anthony Finnerty.
 
-Licensed under the **GNU General Public License v3**; see [LICENSE](LICENSE). Preserve existing source-file copyright notices and confirm any CERN attribution requirements before wider distribution.
+Licensed under the **GNU General Public License v3**; see [LICENSE](LICENSE).
