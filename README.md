@@ -1,101 +1,53 @@
-# ORE Dashboard Filters for OJS 3.6
+# ORE Dashboard Filters
 
-Prototype generic plugin for the OJS 3.6 editorial dashboard.
+A generic plugin for the **Open Journal Systems (OJS) 3.6** editorial dashboard. It adds ORE-specific filters, configurable submission flags, dashboard display options and contextual information on hover without modifying OJS core files.
 
-Version 0.1.2 has passed the supplied build and mock-store checks and a smoke
-test on a disposable local OJS 3.6 Docker installation. It still requires
-testing against CERN's exact OJS build, database and migrated ORE records.
+> **Handover preparation:** This branch contains documentation for the enhanced plugin tested locally on OJS 3.6.0.0. The complete installed v0.3.7 source and later enhancements have not yet been imported. **Do not deploy this branch as the current release.**
 
-## Author
+## Features
 
-Original development and maintenance by
-[Anthony Finnerty](https://github.com/afinn3954).
+- **Editorial filters:** Publication lifecycle (AO, PMUR, VoR), workflow stage, submission date and time, editorial task or discussion title, task status, submission flag, section and category.
+- **Submission flags:** Custom full names, short labels, icons, colours, ordering and visibility. Flags can be assigned to submissions and filtered in the dashboard.
+- **Role permissions:** Configurable viewing and editing access for different OJS roles, with administrator and journal-manager access maintained.
+- **Dashboard layout:** Compact or detailed display, optional columns, configurable date formatting, title truncation and expandable reviewer activity indicators.
+- **Sorting:** Submission and last-updated dates, alongside native dashboard sorting.
+- **Contextual hover information:** Full submission title and corresponding-author details; submission dates; stage and publication version; assigned stage participants; and current-round reviewers where the user is authorised to see them.
+- **Native OJS integration:** Original dashboard controls, reviewer activity popovers and workflow actions remain available.
 
-The plugin was developed in 2026 as part of the Open Research Europe
-transition work at CERN.
+## Configuration
 
-## Filters
+Open **Settings → Website → Plugins → Installed Plugins → ORE Dashboard Filters → Settings**.
 
-- Section: current journal sections
-- Categories: current journal category hierarchy
-- Publication lifecycle: AO, PMUR, VoR
-- Workflow stage: Submission, Editorial checks, Peer review, Production
-- Submission date: Today, Yesterday, Custom range
+| Area | Controls |
+| --- | --- |
+| Flags | Full name, short label, icon, colour, dropdown visibility and order |
+| Filters | Enable or disable the additional editorial filters |
+| Columns | Submitted, last updated, publishing stage, flags and editorial activity |
+| Appearance | Compact or detailed layout, updated-date format and flag display style |
+| Roles | Permission to use filters and view or edit flags |
 
-The plugin deliberately treats publication lifecycle and editorial workflow
-stage as separate dimensions. A submission can therefore be in Peer review
-while its current published lifecycle is PMUR.
+**Full name** identifies the flag in its definition and detailed information, for example **Needs checking**. **Short label** is the compact dashboard label, for example **Check**. The **icon** can appear alone or alongside either label.
+
+See [Configuration](docs/configuration.md) for a description of the options and [Deployment](docs/deployment.md) for the IT checklist.
 
 ## Installation
 
-Install the ZIP through the OJS plugin uploader or copy the
-`oreDashboardFilters` directory to:
+The plugin directory must be installed as:
 
 ```text
-plugins/generic/oreDashboardFilters
+plugins/generic/oreDashboardFilters/
 ```
 
-Clear OJS caches, then enable **ORE Dashboard Filters** in the plugin list.
+Back up the OJS database and existing plugin files before replacing an installation. Install or update the plugin through the supported OJS plugin procedure, enable it in **Installed Plugins**, and verify the dashboard and settings with an authorised editor. Avoid using the experimental 8083 patch installers as the handover release.
 
-## Architecture
+## Compatibility
 
-- Frontend fields are injected through the documented OJS 3.6 `dashboard`
-  Pinia store extension mechanism.
-- Section and Categories use OJS's current server-side field configurations,
-  labels, IDs, breadcrumbs and category vocabulary. The plugin only inserts
-  either field when core OJS did not already provide it.
-- A journal with no configured categories receives a visible disabled
-  Categories state instead of silently losing the filter.
-- The native `stageIds` filter is reused.
-- Native `sectionIds` and `categoryIds` backend filtering is reused.
-- Plugin-specific lifecycle and date parameters are applied through the core
-  `Submission::Collector` hook.
-- Lifecycle filtering uses the collector's existing current-publication join,
-  `po.version_stage`.
-- Empty filters use an empty-array state so OJS 3.6 does not create unwanted
-  All chips or dereference a missing option.
-- A synchronous watcher follows complete filter-form replacement by the modal,
-  restores plugin filters from dashboard URLs and keeps date labels safe.
-- The frontend asset URL uses the installed plugin release for cache busting
-  during upgrades.
-- No OJS, pkp-lib or ui-library source file is patched.
+- Target: **OJS 3.6**.
+- Development validation: default OJS 3.6.0.0 on an isolated local instance, port 8083.
+- The final consolidated source and integration tests are required before deployment to the production ORE theme.
 
-## Prototype limits
+## Author and licence
 
-- Not yet runtime-tested on the PKP-hosted or CERN ORE instance.
-- Date boundaries use the PHP/OJS server timezone and need UAT confirmation.
-- Labels are currently English in the JavaScript bundle.
-- Section and Categories labels and options are supplied by OJS in the active
-  interface locale.
-- Lifecycle means the stage of OJS's `current_publication_id`: the most mature
-  published publication, or the most mature unpublished publication when none
-  has been published.
-- The plugin does not add the separate All submissions dashboard view,
-  dashboard columns or hide-empty-category option.
+**Anthony Finnerty**, 2026. Copyright © 2026 Anthony Finnerty.
 
-## Rollback
-
-Disable **ORE Dashboard Filters**, clear OJS caches and remove
-`plugins/generic/oreDashboardFilters` if the files were installed manually.
-The plugin creates no database tables or settings, so no data migration needs
-to be reversed.
-
-## Licence
-
-This plugin is licensed under the GNU General Public License version 3, in
-line with OJS and official PKP plugins. See [`LICENSE`](LICENSE) for the
-complete terms.
-
-The repository remains private during CERN IT evaluation. Before any public
-release, CERN should confirm the final copyright notice and any wording
-required for its status as an intergovernmental organisation.
-
-## Technical documentation
-
-- [Architecture and filter semantics](docs/architecture.md)
-- [Installation and rollback](docs/installation-and-rollback.md)
-- [Technical and security review](docs/technical-and-security-review.md)
-- [CERN IT acceptance-test record](docs/cern-it-acceptance-test.md)
-- [Validation record](validation/VALIDATION.md)
-
-See `CHANGELOG.md` for the release history.
+Licensed under the **GNU General Public License v3**; see [LICENSE](LICENSE). Preserve existing source-file copyright notices and confirm any CERN attribution requirements before wider distribution.
