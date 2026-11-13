@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+*.sql
+*.sqlite
+*.bak
+*.zip
+ORE_V*_INSTALL.json

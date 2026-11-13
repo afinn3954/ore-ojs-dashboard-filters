@@ -1,0 +1,11 @@
+msgid "plugins.generic.oreDashboardFilters.displayName"
+msgstr "ORE Dashboard Filters"
+
+msgid "plugins.generic.oreDashboardFilters.description"
+msgstr "Adds dashboard publication, date, task and flag filters; shared editorial flags are configured in the plugin Settings screen."
+
+msgid "plugins.generic.oreDashboardFilters.noSectionsConfigured"
+msgstr "No sections are configured for this journal."
+
+msgid "plugins.generic.oreDashboardFilters.noCategoriesConfigured"
+msgstr "No categories are configured for this journal."

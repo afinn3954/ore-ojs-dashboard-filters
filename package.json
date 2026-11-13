@@ -1,0 +1,15 @@
+{
+  "name": "ore-dashboard-filters",
+  "private": true,
+  "version": "0.3.8",
+  "type": "module",
+  "scripts": {
+    "build": "vite build && node scripts/build-assets.mjs",
+    "build:assets": "node scripts/build-assets.mjs",
+    "check": "node --check resources/js/ore-v3.js && node --check resources/js/ore-dashboard-enhancements.js && node --check resources/js/ore-settings.js && node --check resources/js/ore-settings-refined.js"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "author": "Anthony Finnerty"
+}
