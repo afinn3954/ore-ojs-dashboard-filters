@@ -1,9 +1,22 @@
 # Changelog
 
+## 0.3.8.0 (13 November 2026, IT handover candidate)
+
+- Consolidated the complete installed OJS 3.6 plugin into an auditable release.
+- Included the latest compact layout, flag menu and hover enhancements, including assigned stage participants and current-round reviewers.
+- Restored editable source files for previously installed JavaScript and CSS enhancements and made the asset build reproducible.
+- Removed local installation records and aligned version metadata.
+- No database schema changes. Final environment testing is required before production deployment.
+
+## 0.3.7.0 (12 November 2026)
+
+- Configurable flag definitions, icon library, colours, appearance and role permissions.
+- Additional editorial filters and dashboard columns.
+
+# Changelog
+
 ## 0.1.2 – 25 July 2026
 
-- Added explicit original-developer attribution for Anthony Finnerty and
-  completed the GNU GPL v3 repository and package metadata.
 - Restored the Section filter when core OJS omits it, including journals with
   only one configured section.
 - Restored the Categories filter from the journal's current category

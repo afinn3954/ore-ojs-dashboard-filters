@@ -1,40 +1,33 @@
-# Deployment and verification
+# Deployment
 
-## Prerequisites
+## Requirements
 
-- An OJS 3.6 installation and administrator access.
-- A **complete** `oreDashboardFilters` plugin directory from the verified release, including PHP, JavaScript assets, version metadata, translations and dependencies that ship with the plugin.
-- A backup of the OJS database and the existing plugin directory.
-
-Do **not** deploy from the July 2026 v0.1.2 repository state or from individual 8083 patch ZIPs.
+- Open Journal Systems **3.6**.
+- Access to the plugin directory and an administrator account.
+- A backup of the existing OJS database and `plugins/generic/oreDashboardFilters` folder.
 
 ## Install or upgrade
 
-1. Confirm the target OJS build and the plugin's `version.xml` release.
-2. Back up the database and the entire existing `plugins/generic/oreDashboardFilters` directory.
-3. Copy the complete release into `plugins/generic/oreDashboardFilters`, preserving its directory structure.
-4. Follow the plugin installation or upgrade procedure for the target OJS 3.6 instance; enable it under **Installed Plugins**.
-5. Refresh OJS assets/caches using the procedure supported by that particular installation.
-6. Verify settings, filters, role permissions and flag assignments before authorising production use.
+1. Confirm the target OJS version and back up the existing installation.
+2. Copy the complete `oreDashboardFilters` folder into `plugins/generic/`.
+3. Register or update the plugin using the method supported by that OJS installation and enable it under **Installed Plugins**.
+4. Clear the appropriate application and browser asset caches and reload the editorial dashboard.
+5. Verify the saved flags and permissions, which are stored in the OJS database rather than the source ZIP.
 
-## Acceptance checklist
+Do not install the old `oreDashboardCompact` companion plugin or any of the local 8083 repair patches. The consolidated source includes those enhancements.
 
-- [ ] Plugin loads on stock OJS 3.6 without browser console errors.
-- [ ] Compact dashboard stays within the available viewport width.
-- [ ] Full and short flag names, icons, colours and selection persist after refresh.
-- [ ] Site administrators, journal managers and restricted roles have correct access.
-- [ ] Submission/updated sorting and filters return expected results.
-- [ ] Title hover shows the full title and authorised corresponding-author metadata.
-- [ ] Stage hover displays participants and current-round reviewers correctly.
-- [ ] Empty and restricted review-data states are distinguishable.
-- [ ] Original OJS reviewer popovers and flag actions work after navigation.
-- [ ] No hover panel remains visible after leaving the dashboard.
-- [ ] Production ORE theme compatibility is checked separately.
+## Acceptance checks
+
+- [ ] The compact dashboard fits the viewport and title truncation works.
+- [ ] Flags, colours, full and short labels, display options and assignments persist after refresh.
+- [ ] Filters and date sorting work as intended.
+- [ ] Role permissions are enforced for editors, managers and restricted accounts.
+- [ ] Review indicators and native OJS popovers remain interactive.
+- [ ] Hover panels close on pointer exit and navigation.
+- [ ] Corresponding author details and reviewer identities respect OJS permissions.
+- [ ] Stage hover lists current-stage participants and the current review round's reviewers.
+- [ ] Default OJS 3.6 passes before testing any ORE-specific production theme.
 
 ## Rollback
 
-Restore the backed-up plugin directory. If the release applies database migrations, also follow the approved database rollback plan. Clear the relevant OJS caches and verify the previous version loads. Disabling the plugin alone does not constitute a complete database rollback.
-
-## Release control
-
-The handover release must be built from the complete, tested 8083 plugin source. Exclude environment files, secrets, SQL backups, production user data, screenshots containing private information and one-off local repair installers.
+Restore the previously backed-up plugin directory, clear application caches and verify the previous version. If a future version introduces database migrations, follow the approved database recovery procedure. This source consolidation introduces no migration.

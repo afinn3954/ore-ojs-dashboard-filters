@@ -1,11 +1,3 @@
-/**
- * @file plugins/generic/oreDashboardFilters/resources/js/main.js
- *
- * Copyright (c) 2026 CERN
- * Original developer: Anthony Finnerty
- * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
- */
-
 (function () {
     'use strict';
 
@@ -422,7 +414,7 @@
                         },
                         {
                             value: stage.WORKFLOW_STAGE_ID_EDITING ?? 4,
-                            label: 'Editorial checks',
+                            label: 'Copyediting',
                         },
                         {
                             value:

@@ -1,63 +1,57 @@
 # Configuration
 
-Settings are managed in **Settings → Website → Plugins → Installed Plugins → ORE Dashboard Filters → Settings**. Changes are journal-specific where supported by the plugin.
+Open **Settings → Website → Plugins → Installed Plugins → ORE Dashboard Filters → Settings**.
 
 ## Flags
 
-Each flag has the following properties:
+Each journal flag has the following fields:
 
-| Setting | Purpose | Example |
-| --- | --- | --- |
-| Full name | Descriptive flag name in settings and detailed information | Needs checking |
-| Short label | Abbreviated label in compact display | Check |
-| Icon | Symbol selected from the plugin icon library | Circle alert |
-| Colour | Preset or custom hex colour | #b4232a |
-| Enabled in dropdown | Whether users can select the flag | On |
-| Order | Position in the selector | Move up/down |
+| Field | Description |
+| --- | --- |
+| Full name | Descriptive flag name, such as **Needs checking** |
+| Short label | Compact label, such as **Check** |
+| Icon | Symbol from the built-in icon library |
+| Colour | Colour preset or six-digit hex value |
+| Enabled in dropdown | Whether editors can select it |
+| Order | Position in the dropdown |
 
-The flag column can display **icon only**, **icon + short label** or **icon + full name**. The selection menu should retain readable flag names in every mode. An assigned flag is not deleted merely because it is disabled in the dropdown.
+Display modes: **icon only**, **icon + short label**, **icon + full name**. The selection menu should retain readable option names in all modes. Flag hover details use the selected flag's colour. An assigned flag may need its submission assignments cleared before it can be deleted.
 
 ## Filters
 
-Additional filters can be enabled individually:
+The following can be enabled individually:
 
 - Publication lifecycle: Author's Original (AO), Published Manuscript Under Review (PMUR), Version of Record (VoR).
 - Workflow stage.
 - Submission date and date range.
 - Submission time range.
-- Editorial task or discussion title.
-- Open or closed editorial task/discussion.
+- Editorial task/discussion title.
+- Editorial task/discussion status (open or closed).
 - Submission flag.
-- Section.
-- Category.
+- OJS section and category.
 
-These extend rather than replace the standard OJS dashboard filters.
+## Columns and appearance
 
-## Dashboard columns and appearance
-
-| Setting | Behaviour |
+| Setting | Options |
 | --- | --- |
 | Layout | Compact or detailed |
-| Submitted | Optional separate date/time column |
-| Last updated | Optional date/time column; format configurable |
-| Publishing stage | Optional separate PMUR/VoR column |
-| Flag column | Display and assign submission flags |
-| Editorial activity | Show native reviewer activity indicators |
-| Flag display | Icon only, icon + short label or icon + full name |
+| Columns | Submitted, Last updated, Publishing stage, Flag |
+| Updated date format | Short or full |
+| Flag display | Icon only, icon + short label, icon + full name |
+| Compact mode | Separate Submitted column, separate Publishing stage column and Editorial Activity visibility |
 
-**Compact mode** favours a truncated one-line submission title, keeps stage and publishing version beneath it, and moves supplementary detail into hover panels. Submission and last-updated date information can be displayed together on hover. Review activity controls remain interactive; where many are present, the surplus can be opened with a **+N** control.
-
-**Detailed mode** exposes more standalone columns and should be checked at the target screen width.
+Compact mode keeps the title on one line and places stage/version information below it. Additional information is available on hover rather than taking permanent column space. The native reviewer activity buttons and their popovers remain available; **+N** reveals additional indicators.
 
 ## Hover information
 
-- **Submission title:** Full title, corresponding authors and emails where available.
-- **Stage:** Current workflow stage and publishing version; assigned participants; current-round reviewers for submissions in Review.
+- **Title:** Full title, corresponding author names and emails where available.
+- **Stage:** Workflow and publishing stage, assigned participants, current-round reviewers during Review.
 - **Dates:** Submitted and last-updated timestamps.
-- **Flag:** Selected flag name, short label and colour.
+- **Flag:** Full name, short label and colour.
+- **ID / Days:** Submission identifier and elapsed activity information.
 
-If there are no reviewers in the current round, show **No reviewers assigned**. If permission or API access prevents retrieval, show **Details unavailable**, not a misleading empty state. Author and reviewer data are retrieved through the authenticated OJS API and remain subject to OJS access controls.
+A review stage with no assigned reviewers shows **No reviewers assigned**. When an API response is inaccessible, the panel identifies the information as unavailable rather than assuming there are no assignments.
 
 ## Permissions
 
-Site administrators and journal managers retain access. Other user roles can be configured for filter use, flag visibility and flag editing. Test representative roles before deploying to a shared installation.
+Site administrators and journal managers retain full access. Other roles can be permitted to use filters, view additional columns, view flags or edit flags. All author and reviewer metadata remains subject to OJS authorisation.

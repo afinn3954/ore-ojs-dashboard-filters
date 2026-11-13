@@ -1,0 +1,174 @@
+/*
+ * ORE Dashboard Filters: supplemental OJS 3.6 dashboard styles.
+ * Scoped to the editorial dashboard. No OJS core styles are changed.
+ *
+ * v0.3.5 forced a 860px fixed-layout table, which compressed ten columns
+ * enough to split words, clip Stage text and truncate Flag selections.
+ * Instead preserve natural column sizing and scroll only the table region
+ * if the viewport cannot reasonably fit the extra columns.
+ */
+
+/* The OJS dashboard shell must not expand the document viewport. */
+body.pkp_page_dashboard.pkp_op_editorial {
+    min-width: 0 !important;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__body,
+body.pkp_page_dashboard.pkp_op_editorial .app__main,
+body.pkp_page_dashboard.pkp_op_editorial .app__page,
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Preserve the native OJS dashboard scroll container. The table can be
+ * wider than the viewport; the rest of the dashboard must never be. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Natural layout redistributes spare space. Optional columns do not
+ * leave behind a needlessly wide table when they are disabled. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table {
+    width: 100%;
+    min-width: 100%;
+    max-width: none;
+    table-layout: auto;
+}
+
+/* The full ten-column dashboard needs breathing room. Shorter, single-line
+ * submission titles allow a slightly more compact minimum. This minimum only
+ * applies if all four ORE column types are visible. When managers disable
+ * columns, normal content-driven sizing resumes. Chrome 156 supports :has. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table:has(td[data-ore-cell="submitted"]):has(td[data-ore-cell="last-modified"]):has(td[data-ore-cell="publishing-stage"]):has(td[data-ore-cell="flag"]) {
+    min-width: 1560px;
+}
+
+/* Never split single words (SUBMITTED, Unassigned, etc.) mid-word.
+ * Long editorial text still wraps naturally at spaces. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th,
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td {
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+    white-space: normal;
+    vertical-align: middle;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th button {
+    min-width: 0;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: normal;
+    text-align: left;
+}
+
+/* The ID and submission title are stable positions in this OJS dashboard.
+ * Keep the submission title on ONE line with an ellipsis, as in the live
+ * ORE dashboard, even where other added columns need more horizontal space.
+ * We never clamp the actual data; the OJS workflow still exposes the full title. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th:first-child,
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:first-child {
+    min-width: 54px;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th:nth-child(2),
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:nth-child(2) {
+    min-width: 250px;
+    width: 350px;
+    max-width: 390px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* When the Publishing stage column is present, its preceding native Stage
+ * cell must not wrap Review (Round 1) across extra lines. This remains
+ * dynamic if a manager hides other columns via the plugin settings. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:has(+ td[data-ore-cell="publishing-stage"]) {
+    min-width: 155px;
+    white-space: nowrap;
+}
+
+/* Editorial activity can wrap at word boundaries, but long author titles
+ * will never expand the row vertically. Keep enough room for action text. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:has(+ td[data-ore-cell="flag"]) {
+    min-width: 235px;
+    max-width: 370px;
+}
+
+/* Our plugin columns use stable data-ore-cell markers and remain legible
+ * even when columns are disabled, enabled or reordered in Settings. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-date-cell {
+    min-width: 146px;
+    white-space: normal;
+    overflow-wrap: normal;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-version-cell {
+    min-width: 142px;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-version-cell > span {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-flag-cell {
+    min-width: 190px;
+}
+body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-flag-cell select {
+    box-sizing: border-box;
+    display: block;
+    min-width: 170px;
+    width: 100%;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The native OJS components may contain long titles or tasks. Keep those
+ * inside their table cell without breaking ordinary words unnecessarily. */
+body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td > div {
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* Compact mode: native-width table, one flexible title, concise metadata. */
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th:nth-child(2),
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:nth-child(2) {
+    min-width: 210px;
+    width: 410px;
+    max-width: 440px;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-compact-title-cell {min-width:210px;width:410px;max-width:440px;}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .ore-compact-title-text {
+    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .ore-compact-title-meta {
+    font-size:11px;line-height:1.15rem;color:#64748b;white-space:nowrap;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-date-cell {
+    min-width:106px;max-width:142px;white-space:nowrap;font-size:13px;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-flag-cell {
+    min-width:85px;width:106px;max-width:170px;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-dashboard-flag-cell select {
+    min-width:0;max-width:120px;width:auto;display:inline-block;padding:0;text-overflow:ellipsis;
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .ore-compact-flag {
+    max-width:100%;white-space:nowrap;
+}
+@media(max-width:1220px) {
+  html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table {
+    min-width:975px;
+  }
+}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td[data-ore-cell="last-modified"] + td {
+    min-width: 150px;
+    white-space: nowrap;
+}

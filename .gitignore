@@ -1,5 +1,11 @@
 node_modules/
-validation/node_modules/
-dist/
-*.zip
+.env
+.env.*
+!.env.example
+*.log
 .DS_Store
+*.sql
+*.sqlite
+*.bak
+*.zip
+ORE_V*_INSTALL.json

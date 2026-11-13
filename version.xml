@@ -1,20 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
-
-<!--
-  * plugins/generic/oreDashboardFilters/version.xml
-  *
-  * Copyright (c) 2026 CERN
-  * Original developer: Anthony Finnerty
-  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
-  *
-  * Plugin version information.
-  -->
 <version>
     <application>oreDashboardFilters</application>
     <type>plugins.generic</type>
-    <release>0.1.2.0</release>
-    <date>2026-07-25</date>
+    <release>0.3.8.0</release>
+    <date>2026-11-13</date>
     <lazy-load>1</lazy-load>
     <class>OreDashboardFiltersPlugin</class>
 </version>

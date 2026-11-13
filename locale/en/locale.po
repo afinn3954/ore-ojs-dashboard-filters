@@ -1,12 +1,8 @@
-# Copyright (c) 2026 CERN
-# Original developer: Anthony Finnerty
-# Distributed under the GNU GPL v3. For full terms see the file LICENSE.
-
 msgid "plugins.generic.oreDashboardFilters.displayName"
 msgstr "ORE Dashboard Filters"
 
 msgid "plugins.generic.oreDashboardFilters.description"
-msgstr "Adds ORE publication lifecycle, workflow stage and submission date filters while preserving Section and Categories on the OJS editorial dashboard."
+msgstr "Adds dashboard publication, date, task and flag filters; shared editorial flags are configured in the plugin Settings screen."
 
 msgid "plugins.generic.oreDashboardFilters.noSectionsConfigured"
 msgstr "No sections are configured for this journal."
