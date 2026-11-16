@@ -30,6 +30,13 @@ use PKP\plugins\Hook;
 
 class OreDashboardFiltersPlugin extends GenericPlugin
 {
+
+    /** Create the required tables during a new OJS installation. */
+    public function getInstallMigration()
+    {
+        require_once __DIR__ . '/OreDashboardFlagSchema.php';
+        return new OreDashboardFlagSchema();
+    }
     /**
      * @copydoc Plugin::register()
      *
@@ -49,7 +56,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
                 $nativeSettingsTemplateManager = TemplateManager::getManager($nativeSettingsRequest);
                 $nativeSettingsTemplateManager->addJavaScript(
                     'OreDashboardFiltersNativeSettings',
-                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.3.8.0",
+                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.3.9.0",
                     [
                         'inline' => false,
                         'contexts' => ['backend'],
@@ -76,7 +83,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
             $oreSettingsUiManager = \APP\template\TemplateManager::getManager($request);
             $oreSettingsUiManager->addJavaScript(
                 'OreDashboardFiltersSettingsRefined',
-                "{$request->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings-refined.js?v=0.3.8-settings6",
+                "{$request->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings-refined.js?v=0.3.9-settings6",
                 [
                     'inline' => false,
                     'contexts' => ['backend'],
@@ -119,7 +126,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
             $pluginVersion = $this->getCurrentVersion();
             $assetVersion = $pluginVersion
                 ? $pluginVersion->getVersionString()
-                : '0.3.8.0';
+                : '0.3.9.0';
 
             $templateMgr->addJavaScript(
                 'OreDashboardFilters',

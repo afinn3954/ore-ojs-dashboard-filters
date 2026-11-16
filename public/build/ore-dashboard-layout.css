@@ -76,8 +76,8 @@ body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:
 body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th:nth-child(2),
 body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:nth-child(2) {
     min-width: 250px;
-    width: 350px;
-    max-width: 390px;
+    width: auto;
+    max-width: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -141,12 +141,12 @@ html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .
 html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table th:nth-child(2),
 html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .min-h-screen > div > .mt-4:last-child table td:nth-child(2) {
     min-width: 210px;
-    width: 410px;
-    max-width: 440px;
+    width: auto;
+    max-width: none;
 }
-html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-compact-title-cell {min-width:210px;width:410px;max-width:440px;}
+html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main td.ore-compact-title-cell {min-width:210px;width:auto;max-width:none;}
 html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .ore-compact-title-text {
-    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px;
+    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
 }
 html.ore-dashboard-compact body.pkp_page_dashboard.pkp_op_editorial .app__main .ore-compact-title-meta {
     font-size:11px;line-height:1.15rem;color:#64748b;white-space:nowrap;

@@ -60,9 +60,15 @@ class OreDashboardFlagSettingsModal
             return new JSONMessage(false, 'Journal manager permissions required.');
         }
 
-        if (!DB::getSchemaBuilder()->hasTable('ore_dashboard_flag_definitions') ||
-            !DB::getSchemaBuilder()->hasTable('ore_dashboard_flags')) {
-            return new JSONMessage(false, 'ORE Dashboard Filters flag tables are not installed.');
+        // On an already-installed OJS instance, copying a generic plugin does
+        // not execute system-install migrations. The authorised settings action
+        // safely creates missing flag tables without altering existing data.
+        try {
+            require_once __DIR__ . '/OreDashboardFlagSchema.php';
+            (new OreDashboardFlagSchema())->up();
+        } catch (\Throwable $error) {
+            error_log('[ORE Dashboard Filters] Flag schema installation failed: ' . $error->getMessage());
+            return new JSONMessage(false, 'Unable to initialise flag tables. Ask the QA database administrator to check table-creation permissions and the OJS error log.');
         }
 
         // Journal managers configure only the active journal. On the global
@@ -109,12 +115,12 @@ class OreDashboardFlagSettingsModal
         // the editor reliably even when the grid was loaded asynchronously.
         $scriptUrl = htmlspecialchars(
             rtrim($request->getBaseUrl(), '/')
-                . '/plugins/generic/oreDashboardFilters/public/build/ore-settings.js?v=0.3.8.0',
+                . '/plugins/generic/oreDashboardFilters/public/build/ore-settings.js?v=0.3.9.0',
             ENT_QUOTES | ENT_SUBSTITUTE,
             'UTF-8'
         );
         $iconsUrl = htmlspecialchars(
-            rtrim($request->getBaseUrl(), '/') . '/plugins/generic/oreDashboardFilters/public/build/ore-flag-icons.js?v=0.3.8.0',
+            rtrim($request->getBaseUrl(), '/') . '/plugins/generic/oreDashboardFilters/public/build/ore-flag-icons.js?v=0.3.9.0',
             ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'
         );
         $fallbackRows = '';

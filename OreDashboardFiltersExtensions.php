@@ -79,18 +79,18 @@ class OreDashboardFiltersExtensions
         }
         $templateManager->addJavaScript(
             'OreDashboardFlagIcons',
-            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-flag-icons.js?v=0.3.8.0",
+            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-flag-icons.js?v=0.3.9.0",
             ['inline' => false, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LATE]
         );
         $templateManager->addJavaScript(
             'OreDashboardFiltersV3',
-            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-v3.js?v=0.3.8.0",
+            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-v3.js?v=0.3.9.0",
             ['inline' => false, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
         );
         // Scoped dashboard layout CSS. Load as a proper stylesheet after OJS's
         // build.css, so plugin cells use the native border tokens and the
         // dashboard table scrolls internally without squeezing its text.
-        $cssUrl = "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-dashboard-layout.css?v=0.3.8.0";
+        $cssUrl = "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-dashboard-layout.css?v=0.3.9.0";
         $templateManager->addHeader(
             'OreDashboardFiltersV36Layout',
             '<link rel="stylesheet" href="' . htmlspecialchars($cssUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">',

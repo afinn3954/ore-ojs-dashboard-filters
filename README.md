@@ -13,7 +13,7 @@ A generic plugin for the **Open Journal Systems (OJS) 3.6** editorial dashboard,
 
 ## Install
 
-Copy the complete `oreDashboardFilters` directory into `plugins/generic/` on an OJS 3.6 installation, then enable it under **Settings → Website → Plugins → Installed Plugins**. Back up the existing plugin files and database before upgrading. See [Deployment](docs/deployment.md).
+Copy the complete `oreDashboardFilters` directory into `plugins/generic/` on an OJS 3.6 installation, then enable it under **Settings → Website → Plugins → Installed Plugins**. Open its **Settings** once as a manager or administrator to initialise the flag tables. Back up the existing database and plugin directory before upgrading. See [Deployment](docs/deployment.md).
 
 ## Configure
 
@@ -34,7 +34,7 @@ The ready-to-use assets are included in `public/build/`. Editable files are in `
 
 ## Compatibility
 
-Target: **OJS 3.6.0.0**. Consolidated from the plugin tested on the isolated 8083 development instance on 13 November 2026. Verify functionality and permissions on the target environment before production deployment.
+Target: **OJS 3.6.0.0**. Version 0.3.9.0 includes a QA flag-table installation fix and fluid submission column sizing. Verify functionality and permissions on the target environment before production deployment.
 
 ## Copyright and licence
 

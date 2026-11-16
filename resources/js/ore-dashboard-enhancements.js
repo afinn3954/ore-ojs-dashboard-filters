@@ -1,6 +1,6 @@
 /* ORE dashboard enhancement: begin */
 /*
- * ORE Dashboard Filters 0.3.8, stock OJS 3.6 compact layout, accessible icon-only flag menu, lifecycle-safe overlays.
+ * ORE Dashboard Filters 0.3.9, stock OJS 3.6 compact layout, accessible icon-only flag menu, lifecycle-safe overlays.
  * Dashboard presentation enhancement. Read-only authenticated submission API lookup on title hover; no persistent storage or database changes.
  * Keeps original interactive flag and review buttons in their original cells.
  */
@@ -47,6 +47,18 @@
       vertical-align: middle !important;
     }
     table.${PREFIX}-table .${PREFIX}-hidden { display: none !important; }
+    /* The submission column expands into spare space on wide screens. */
+    table.${PREFIX}-table .${PREFIX}-col-submissions {
+      max-width: none !important;
+    }
+    table.${PREFIX}-table .${PREFIX}-col-submissions .ore-compact-title-text,
+    table.${PREFIX}-table .${PREFIX}-col-submissions .text-base-normal {
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
     /* Explicit widths are measured against the table. Title is the residual column. */
     table.${PREFIX}-table .${PREFIX}-col-id { width: var(--ore041-w-id, 52px) !important; }
     table.${PREFIX}-table .${PREFIX}-col-submissions { width: var(--ore041-w-submissions, 320px) !important; }
@@ -1213,8 +1225,10 @@
     deferHideTip();
   }
   function sizesForWidth(width) {
-    // Right-hand columns have priority. The title takes the remaining space,
-    // not the other way round. Limit title width on wide screens.
+    // Reserve practical widths for controls and reviewer activity; give the
+    // submission title ALL remaining space. Never cap it at 440/600 pixels.
+    // This prevents the enormous empty Editorial Activity column on QA's
+    // wide monitors while preserving compact behaviour on narrow screens.
     const narrow = width < 900;
     const veryNarrow = width < 620;
     const tiny = width < 520;
@@ -1223,21 +1237,16 @@
     const days = veryNarrow ? 0 : 58;
     const mode = String(window.oreDashboardFiltersV3Config?.appearance?.flagDisplay || '').toLowerCase();
     const iconOnly = ['icon', 'icons', 'icon-only', 'icon_only'].includes(mode);
-    const flag = iconOnly ? 56 : width >= 1200 ? 165 : width >= 900 ? 148 : width >= 660 ? 133 : 115;
-    const actions = width < 700 ? 64 : 78;
-    let activity = width >= 1500 ? Math.round(width * 0.29) :
-      width >= 1100 ? Math.round(width * 0.265) :
-      width >= 900 ? 232 : width >= 660 ? 190 : width >= 520 ? 160 : 118;
-    const titleCap = width >= 1400 ? 600 : width >= 1200 ? 520 : 440;
+    const flag = iconOnly ? 56 : tiny ? 72 : width >= 1200 ? 165 : width >= 900 ? 148 : width >= 660 ? 133 : 115;
+    const actions = tiny ? 52 : width < 700 ? 64 : 78;
+    let activity = width >= 1700 ? 420 : width >= 1300 ? 340 :
+      width >= 1100 ? 290 : width >= 900 ? 232 :
+      width >= 660 ? 190 : width >= 520 ? 150 : 82;
+    const minTitle = tiny ? 130 : 145;
     let submissions = width - id - updated - days - flag - actions - activity;
-    if (submissions > titleCap) {
-      activity += submissions - titleCap;
-      submissions = titleCap;
-    }
-    if (submissions < 145) {
-      const delta = 145 - submissions;
-      activity = Math.max(100, activity - delta);
-      submissions = width - id - updated - days - flag - actions - activity;
+    if (submissions < minTitle) {
+      activity = Math.max(tiny ? 70 : 100, activity - (minTitle - submissions));
+      submissions = Math.max(0, width - id - updated - days - flag - actions - activity);
     }
     return { narrow, veryNarrow, tiny, iconOnly, id, updated, days, flag, actions, activity, submissions };
   }

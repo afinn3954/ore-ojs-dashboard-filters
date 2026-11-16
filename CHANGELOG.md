@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.9.0 (16 November 2026, QA candidate)
+
+- Install the missing flag definition and assignment tables on new OJS installations, and initialise them safely from authorised plugin settings on existing installations. Existing flag data is preserved.
+- Make submission titles expand with the available width on large screens instead of allocating most spare space to Editorial Activity.
+- Improve the QA installation checklist.
+
 ## 0.3.8.0 (13 November 2026, IT handover candidate)
 
 - Consolidated the complete installed OJS 3.6 plugin into an auditable release.
