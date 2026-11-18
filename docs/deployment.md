@@ -15,8 +15,6 @@
 5. Save a test flag and check it is available on the dashboard. Existing flag definitions and assignments are preserved.
 6. Clear the appropriate application and browser asset caches and reload the editorial dashboard. Hard refresh to load the new 0.3.9 assets.
 
-Do not install the old `oreDashboardCompact` companion plugin or any of the local 8083 repair patches. The consolidated source includes those enhancements.
-
 ## Acceptance checks
 
 - [ ] The plugin settings open without a missing-tables error.
