@@ -18,7 +18,16 @@
     ['Blue', '#2563eb'], ['Purple', '#7c3aed'], ['Teal', '#0d9488'],
     ['Grey', '#64748b'], ['Pink', '#db2777'], ['Yellow', '#ca8a04'],
   ];
-  const icons = window.oreDashboardFlagIcons || {names:['flag'],svg:() => document.createTextNode('⚑')};
+  // The OJS admin page may load this editor before the icon library.
+  // Resolve the library when icons are rendered, not when this file is loaded.
+  const icons = {
+    get names() {
+      return window.oreDashboardFlagIcons?.names || ['flag'];
+    },
+    svg(...args) {
+      return window.oreDashboardFlagIcons?.svg(...args) || document.createTextNode('⚑');
+    },
+  };
   const validColour = value => typeof value === 'string' && /^#[a-f0-9]{6}$/i.test(value);
 
   function make(tag, attrs = {}, text = null) {

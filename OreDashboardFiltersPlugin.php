@@ -54,9 +54,20 @@ class OreDashboardFiltersPlugin extends GenericPlugin
             if ($nativeSettingsRouter instanceof PKPPageRouter &&
                 in_array($nativeSettingsRouter->getRequestedPage($nativeSettingsRequest), ['admin', 'management'], true)) {
                 $nativeSettingsTemplateManager = TemplateManager::getManager($nativeSettingsRequest);
+                // Load the icon catalogue before the settings editor. Without
+                // it the picker initially has only the fallback 'flag' icon.
+                $nativeSettingsTemplateManager->addJavaScript(
+                    'OreDashboardFiltersNativeFlagIcons',
+                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-flag-icons.js?v=0.3.9.0",
+                    [
+                        'inline' => false,
+                        'contexts' => ['backend'],
+                        'priority' => TemplateManager::STYLE_SEQUENCE_LATE,
+                    ]
+                );
                 $nativeSettingsTemplateManager->addJavaScript(
                     'OreDashboardFiltersNativeSettings',
-                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.3.9.0",
+                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.3.9.0-iconpicker1",
                     [
                         'inline' => false,
                         'contexts' => ['backend'],
