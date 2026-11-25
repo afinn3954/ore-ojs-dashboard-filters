@@ -68,6 +68,16 @@
     optionNames.forEach(name => {
       const field = getField(store, name);
       if (!field) return;
+      if (name === 'oreFlag' && features.oreFlagMultiSelect !== false) {
+        const values = Array.isArray(field.value) ? field.value : [field.value];
+        const matched = (field.options || []).filter(o =>
+          !Array.isArray(o.value) && values.some(v => String(v) === String(o.value)));
+        const selected = matched.map(o => ({value:o.value,label:o.label}));
+        const filtered = matched.map(o => o.value);
+        if (JSON.stringify(field.value) !== JSON.stringify(filtered)) field.value = filtered;
+        if (JSON.stringify(field.selected) !== JSON.stringify(selected)) field.selected = selected;
+        return;
+      }
       const raw = firstScalar(field.value);
       const option = field.options?.find(o => !Array.isArray(o.value) && String(o.value) === raw);
       updateField(field, option?.value ?? null, option?.label ?? null);
@@ -82,7 +92,7 @@
     const field = getField(store, 'oreFlag');
     if (!field) return;
     field.options = [
-      {value: [], label: 'All submission flags'},
+      ...(features.oreFlagMultiSelect === false ? [{value: [], label: 'All submission flags'}] : []),
       {value: 'unflagged', label: 'No flag'},
       ...getDefinitions(store).filter(f => f.enabled !== false).map(f => ({value: f.id, label: f.label})),
     ];
@@ -294,6 +304,78 @@
 
 
   pkp.registry.storeExtend('dashboard', ({store}) => {
+    // OJS 3.6 My Submissions is an AUTHOR dashboard. Only OJS's own
+    // authorised submission list is extended, never the editorial dashboard.
+    if (store.dashboardPage === 'mySubmissions' && store.filtersForm?.fields) {
+      if (!access.filters && !access.viewFlags && !access.viewColumns) return;
+      store.oreFlags = reactive({});
+      store.oreCanEdit = reactive({});
+      store.oreDefinitions = reactive(defaults.map(f => ({...f})));
+      if (access.viewFlags && configuredColumns.flag !== false) {
+        store.extender.extendFn('getColumns', columns => {
+          if (columns.some(column => column.id === 'oreFlag')) return columns;
+          const result = [...columns];
+          const actions = result.findIndex(column => column.id === 'actions');
+          result.splice(actions < 0 ? result.length : actions, 0,
+            {id: 'oreFlag', header: 'Flag', component: 'OreDashboardCellFlag',
+              sortable: Boolean(access.filters && features.oreFlag !== false &&
+                features.oreFlagSort !== false)});
+          return result;
+        });
+      }
+      const authorFields = [];
+      if (access.filters && access.viewFlags && features.oreFlag !== false) {
+        const field = makeField('oreFlag', 'Submission flag', [
+          {value: 'unflagged', label: 'No flag'},
+          ...defaults.map(flag => ({value: flag.id, label: flag.label})),
+        ]);
+        if (features.oreFlagMultiSelect !== false) {
+          field.type = 'checkbox';
+          field.options = field.options.filter(option => !Array.isArray(option.value));
+          const params = new URLSearchParams(window.location.search);
+          const values = [...params.getAll('oreFlag'), ...params.getAll('oreFlag[]')]
+            .flatMap(value => value.split(','));
+          const matched = field.options.filter(option => values.includes(String(option.value)));
+          field.value = matched.map(option => option.value);
+          field.selected = matched.map(option => ({value: option.value, label: option.label}));
+        }
+        authorFields.push(field);
+      }
+      if (authorFields.length) {
+        const existingNames = new Set(store.filtersForm.fields.map(field => field.name));
+        const additional = authorFields.filter(field => !existingNames.has(field.name));
+        if (additional.length) store.updateFiltersForm({...store.filtersForm,
+          fields: [...store.filtersForm.fields, ...additional]});
+        watch(() => optionNames.map(name => [getField(store, name)?.value,
+          getField(store, name)?.selected]), () => reconcile(store),
+          {deep: true, immediate: true, flush: 'sync'});
+      }
+      if (apiUrl && access.viewFlags) {
+        fetchJson(`${apiUrl}/definitions`).then(data => {
+          if (Array.isArray(data.flags)) {
+            store.oreDefinitions = data.flags;
+            applyDefinitionOptions(store);
+          }
+        }).catch(error => console.warn('[ORE Dashboard Filters] Author flag definitions unavailable', error));
+        let requestNumber = 0;
+        watch(() => (store.submissions || []).map(item => Number(item.id)).join(','), async ids => {
+          if (!ids) return;
+          const current = ++requestNumber;
+          try {
+            const response = await fetchJson(`${apiUrl}?ids=${encodeURIComponent(ids)}`);
+            if (current !== requestNumber) return;
+            const writable = new Set((response.editableIds || []).map(Number));
+            for (const value of ids.split(',')) {
+              store.oreFlags[value] = response.flags?.[value] || '';
+              store.oreCanEdit[value] = writable.has(Number(value));
+            }
+          } catch (error) {
+            console.warn('[ORE Dashboard Filters] Author flags unavailable', error);
+          }
+        }, {immediate: true});
+      }
+      return;
+    }
     if (store.dashboardPage !== 'editorialDashboard' || !store.filtersForm?.fields) return;
     if (!access.filters && !access.viewFlags && !access.viewColumns) return;
     store.oreFlags = reactive({});
@@ -366,7 +448,9 @@
       if (configuredColumns.flag !== false && access.viewFlags && !output.some(column => column.id === 'oreFlag')) {
         const actions = output.findIndex(column => column.id === 'actions');
         output.splice(actions >= 0 ? actions : output.length, 0,
-          {id: 'oreFlag', header: 'Flag', component: 'OreDashboardCellFlag', sortable: false});
+          {id: 'oreFlag', header: 'Flag', component: 'OreDashboardCellFlag',
+              sortable: Boolean(access.filters && features.oreFlag !== false &&
+                features.oreFlagSort !== false)});
       }
       return output;
     });
@@ -399,8 +483,20 @@
         return features.oreSubmissionTime !== false;
       return features[field.name] !== false;
     });
+    const flagField = added.find(field => field.name === 'oreFlag');
+    if (flagField && features.oreFlagMultiSelect !== false) {
+      flagField.type = 'checkbox';
+      flagField.options = flagField.options.filter(option => !Array.isArray(option.value));
+    }
     const params = new URLSearchParams(window.location.search);
     for (const field of added) {
+      if (field.name === 'oreFlag' && features.oreFlagMultiSelect !== false) {
+        const values = [...params.getAll('oreFlag'), ...params.getAll('oreFlag[]')].flatMap(v=>v.split(','));
+        const matched = field.options.filter(option => values.includes(String(option.value)));
+        field.value = matched.map(v=>v.value);
+        field.selected = matched.map(v=>({value:v.value,label:v.label}));
+        continue;
+      }
       const value = params.get(field.name);
       const match = field.options.find(option => !Array.isArray(option.value) && String(option.value) === value);
       if (match) updateField(field, match.value, match.label);

@@ -3,8 +3,8 @@
 <version>
     <application>oreDashboardFilters</application>
     <type>plugins.generic</type>
-    <release>0.3.9.0</release>
-    <date>2026-11-16</date>
+    <release>0.4.2.0</release>
+    <date>2026-11-25</date>
     <lazy-load>1</lazy-load>
     <class>OreDashboardFiltersPlugin</class>
 </version>

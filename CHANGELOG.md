@@ -1,4 +1,27 @@
+## 0.4.2.0 (25 November 2026, local test candidate)
+
+- List users with saved individual permission overrides automatically when plugin Settings opens.
+- Edit or restore role defaults directly from the override table without searching again.
+- Preserve the existing permission checks, editorial features, and Author dashboard behaviour.
+
 # Changelog
+
+## 0.4.1.0 (25 November 2026, consolidated local test candidate)
+
+- Consolidate all source files into a standalone release with no incremental patch dependencies.
+- Retain the working editable flag selector in the submission workflow drawer.
+- Move flag sorting to the dashboard FLAG column header, with server-side ordering.
+- Include the isolated My Submissions author integration for permission-restricted testing; this feature is not yet verified against real author accounts.
+- Keep the existing flags, icons, journal settings, and permissions stored in OJS's database.
+
+## 0.4.0.0 (25 November 2026, local development candidate)
+
+- Add individual journal-user access overrides alongside existing role permissions.
+- Support selecting multiple submission flags with OR filtering.
+- Introduce configurable flag-name sorting (subsequently moved to the FLAG column heading in 0.4.1.0).
+- Show the current flag in the open submission workflow; configurable in appearance.
+- Preserve existing flags and role settings without a schema migration.
+
 
 ## 0.3.9.0 (16 November 2026, QA candidate)
 

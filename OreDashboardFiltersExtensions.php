@@ -79,18 +79,26 @@ class OreDashboardFiltersExtensions
         }
         $templateManager->addJavaScript(
             'OreDashboardFlagIcons',
-            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-flag-icons.js?v=0.3.9.0",
+            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-flag-icons.js?v=0.4.2.0",
             ['inline' => false, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LATE]
         );
         $templateManager->addJavaScript(
             'OreDashboardFiltersV3',
-            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-v3.js?v=0.3.9.0",
+            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-v3.js?v=0.4.2.0",
             ['inline' => false, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
         );
+        if ($canViewFlags && OreDashboardAccess::appearance($contextId)['showWorkflowFlag']) {
+            $templateManager->addJavaScript(
+                'OreDashboardWorkflowFlag',
+                "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-workflow-flag.js?v=0.4.2.0",
+                ['inline' => false, 'contexts' => ['backend'],
+                 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
+            );
+        }
         // Scoped dashboard layout CSS. Load as a proper stylesheet after OJS's
         // build.css, so plugin cells use the native border tokens and the
         // dashboard table scrolls internally without squeezing its text.
-        $cssUrl = "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-dashboard-layout.css?v=0.3.9.0";
+        $cssUrl = "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-dashboard-layout.css?v=0.4.2.0";
         $templateManager->addHeader(
             'OreDashboardFiltersV36Layout',
             '<link rel="stylesheet" href="' . htmlspecialchars($cssUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">',
@@ -227,8 +235,23 @@ class OreDashboardFiltersExtensions
             });
         }
 
-        $flag = self::scalar($request->getUserVar('oreFlag'));
-        if ($canFlagFilter && $flag !== null) {
+        $rawFlag = $request->getUserVar('oreFlag');
+        $flagSelection = is_array($rawFlag) ? $rawFlag : [$rawFlag];
+        $flagSelection = array_merge(...array_map(
+            static fn ($value) => is_string($value) ? explode(',', $value) : [$value], $flagSelection
+        ));
+        $flagSelection = array_values(array_unique(array_filter(array_map(
+            static fn ($value) => is_scalar($value) ? trim((string) $value) : '', $flagSelection
+        ))));
+        if (!OreDashboardAccess::feature($contextId, 'oreFlagMultiSelect')) {
+            $flagSelection = array_slice($flagSelection, 0, 1);
+        }
+        $flagSelection = array_slice($flagSelection, 0, 30);
+        $selectedFlags = array_values(array_filter($flagSelection,
+            static fn ($value) => preg_match('/^[a-z0-9_]{1,20}$/', $value) && $value !== 'unflagged'
+        ));
+        $includeUnflagged = in_array('unflagged', $flagSelection, true);
+        if ($canFlagFilter && ($selectedFlags || $includeUnflagged)) {
             $roles = OreDashboardAccess::roles($contextId, $userId);
             if (!in_array(\PKP\security\Role::ROLE_ID_SITE_ADMIN, $roles, true) &&
                 !in_array(\PKP\security\Role::ROLE_ID_MANAGER, $roles, true)) {
@@ -243,21 +266,48 @@ class OreDashboardFiltersExtensions
                         ->whereIn('ore_assignment_group.role_id', [
                             \PKP\security\Role::ROLE_ID_SUB_EDITOR,
                             \PKP\security\Role::ROLE_ID_ASSISTANT,
+                            // Author permissions are limited to the author's
+                            // own stage-assigned submissions. The native OJS
+                            // My Submissions collector still restricts access.
+                            \PKP\security\Role::ROLE_ID_AUTHOR,
                         ]);
                 });
             }
         }
-        if ($canFlagFilter && $flag === 'unflagged') {
-            $query->whereNotExists(function (Builder $subquery): void {
-                $subquery->selectRaw('1')->from('ore_dashboard_flags as ore_flag')
-                    ->whereColumn('ore_flag.submission_id', 's.submission_id');
+        if ($canFlagFilter && ($selectedFlags || $includeUnflagged)) {
+            // OR semantics: any selected flag, optionally including unflagged.
+            $query->where(function (Builder $match) use ($selectedFlags, $includeUnflagged): void {
+                if ($selectedFlags) {
+                    $match->whereExists(function (Builder $subquery) use ($selectedFlags): void {
+                        $subquery->selectRaw('1')->from('ore_dashboard_flags as ore_flag')
+                            ->whereColumn('ore_flag.submission_id', 's.submission_id')
+                            ->whereIn('ore_flag.flag', $selectedFlags);
+                    });
+                }
+                if ($includeUnflagged) {
+                    $method = $selectedFlags ? 'orWhereNotExists' : 'whereNotExists';
+                    $match->{$method}(function (Builder $subquery): void {
+                        $subquery->selectRaw('1')->from('ore_dashboard_flags as ore_no_flag')
+                            ->whereColumn('ore_no_flag.submission_id', 's.submission_id');
+                    });
+                }
             });
-        } elseif ($canFlagFilter && $flag !== null && preg_match('/^[a-z0-9_]{1,20}$/', $flag)) {
-            $query->whereExists(function (Builder $subquery) use ($flag): void {
-                $subquery->selectRaw('1')->from('ore_dashboard_flags as ore_flag')
-                    ->whereColumn('ore_flag.submission_id', 's.submission_id')
-                    ->where('ore_flag.flag', $flag);
-            });
+        }
+
+        // The native OJS dashboard heading sends orderBy=oreFlag and an
+        // orderDirection. OJS does not recognise plugin-specific sort keys,
+        // so we sort the collector query on the server across all pages.
+        $flagOrderBy = self::scalar($request->getUserVar('orderBy'));
+        $flagOrderDirection = self::scalar($request->getUserVar('orderDirection'));
+        if ($canFlagFilter && OreDashboardAccess::feature($contextId, 'oreFlagSort') &&
+            $flagOrderBy === 'oreFlag' &&
+            in_array($flagOrderDirection, ['ASC', 'DESC'], true)) {
+            // Sort by the configured full flag name, not internal flag key.
+            $direction = $flagOrderDirection;
+            $query->reorder();
+            $query->orderByRaw('CASE WHEN EXISTS (SELECT 1 FROM ore_dashboard_flags osf WHERE osf.submission_id = s.submission_id) THEN 0 ELSE 1 END ASC');
+            $query->orderByRaw('(SELECT fd.label FROM ore_dashboard_flags osf JOIN ore_dashboard_flag_definitions fd ON fd.flag_key = osf.flag AND fd.context_id = osf.context_id WHERE osf.submission_id = s.submission_id LIMIT 1) ' . $direction);
+            $query->orderBy('s.submission_id', 'desc');
         }
 
         $timeFrom = self::parseTime(self::scalar($request->getUserVar('oreTimeFrom')));

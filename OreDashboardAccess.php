@@ -17,6 +17,8 @@ final class OreDashboardAccess
     private const PLUGIN = 'oredashboardfiltersplugin';
     private const SETTING = 'oreDashboardAccessV1';
     private const APPEARANCE_SETTING = 'oreDashboardAppearanceV1';
+    private const USER_PERMISSIONS_SETTING = 'oreDashboardUserPermissionsV1';
+    public const ABILITIES = ['filters', 'viewColumns', 'viewFlags', 'editFlags'];
 
     public const DEFAULT_ROLES = [
         'subEditor' => ['filters' => true, 'viewColumns' => true, 'viewFlags' => true, 'editFlags' => true],
@@ -45,6 +47,8 @@ final class OreDashboardAccess
         'oreTaskTitle' => true,
         'oreTaskStatus' => true,
         'oreFlag' => true,
+        'oreFlagMultiSelect' => true,
+        'oreFlagSort' => true,
         'oreSection' => true,
         'oreCategory' => true,
     ];
@@ -100,11 +104,25 @@ final class OreDashboardAccess
         }
         if (array_keys($settings) === ['roles', 'features', 'columns'] &&
             array_keys($settings['roles']) === ['subEditor', 'assistant']) {
-            return [
+            $settings = [
                 'roles' => array_replace(self::DEFAULT_ROLES, $settings['roles']),
                 'features' => $settings['features'],
                 'columns' => $settings['columns'],
             ];
+        }
+        if (array_keys($settings) === ['roles', 'features', 'columns'] &&
+            isset($settings['features']) && is_array($settings['features'])) {
+            // Preserve all existing filter settings when new capabilities are introduced.
+            foreach (['oreFlagMultiSelect', 'oreFlagSort'] as $key) {
+                if (!array_key_exists($key, $settings['features'])) {
+                    $settings['features'][$key] = self::DEFAULT_FEATURES[$key];
+                }
+            }
+            if (array_diff(array_keys($settings['features']), array_keys(self::DEFAULT_FEATURES))) {
+                return $settings;
+            }
+            // Reorder exactly as the known feature schema.
+            $settings['features'] = array_replace(self::DEFAULT_FEATURES, $settings['features']);
         }
         return $settings;
     }
@@ -166,6 +184,7 @@ final class OreDashboardAccess
         'showSubmitted' => false,
         'showPublishingStage' => false,
         'showEditorialActivity' => true,
+        'showWorkflowFlag' => true,
     ];
 
     public static function validateAppearance(mixed $value): ?array
@@ -178,7 +197,7 @@ final class OreDashboardAccess
             !in_array($value['flagDisplay'], ['icon', 'short', 'full'], true)) {
             return null;
         }
-        foreach (['showSubmitted', 'showPublishingStage', 'showEditorialActivity'] as $key) {
+        foreach (['showSubmitted', 'showPublishingStage', 'showEditorialActivity', 'showWorkflowFlag'] as $key) {
             if (!is_bool($value[$key])) {
                 return null;
             }
@@ -196,6 +215,9 @@ final class OreDashboardAccess
             ->value('setting_value');
         if (!is_string($raw)) return self::DEFAULT_APPEARANCE;
         $value = json_decode($raw, true);
+        if (is_array($value) && !array_key_exists('showWorkflowFlag', $value)) {
+            $value['showWorkflowFlag'] = self::DEFAULT_APPEARANCE['showWorkflowFlag'];
+        }
         return self::validateAppearance($value) ?? self::DEFAULT_APPEARANCE;
     }
 
@@ -234,6 +256,56 @@ final class OreDashboardAccess
         return array_values(array_unique($roleIds));
     }
 
+    /** Individual overrides are separate from the existing role settings. */
+    public static function userOverrides(int $contextId): array
+    {
+        if ($contextId < 1) return [];
+        $raw = DB::table('plugin_settings')->where('plugin_name', self::PLUGIN)
+            ->where('context_id', $contextId)
+            ->where('setting_name', self::USER_PERMISSIONS_SETTING)
+            ->value('setting_value');
+        $decoded = is_string($raw) ? json_decode($raw, true) : null;
+        if (!is_array($decoded)) return [];
+        $valid = [];
+        foreach ($decoded as $id => $abilities) {
+            if (!ctype_digit((string) $id) || (int) $id <= 0 ||
+                !self::validateAbilities($abilities)) continue;
+            $valid[(string) (int) $id] = $abilities;
+        }
+        return $valid;
+    }
+
+    public static function validateAbilities(mixed $abilities): bool
+    {
+        if (!is_array($abilities) || array_keys($abilities) !== self::ABILITIES) return false;
+        foreach (self::ABILITIES as $ability) {
+            if (!is_bool($abilities[$ability])) return false;
+        }
+        return !$abilities['editFlags'] || $abilities['viewFlags'];
+    }
+
+    public static function saveUserOverride(int $contextId, int $userId, ?array $abilities): void
+    {
+        if ($contextId < 1 || $userId < 1 ||
+            ($abilities !== null && !self::validateAbilities($abilities))) {
+            throw new \InvalidArgumentException('Invalid individual user permissions');
+        }
+        $current = self::userOverrides($contextId);
+        if ($abilities === null) unset($current[(string) $userId]);
+        else $current[(string) $userId] = $abilities;
+        if (count($current) > 100) throw new \InvalidArgumentException('Maximum 100 individual overrides');
+        DB::table('plugin_settings')->updateOrInsert(
+            ['plugin_name' => self::PLUGIN, 'context_id' => $contextId,
+             'setting_name' => self::USER_PERMISSIONS_SETTING],
+            ['setting_type' => 'string', 'setting_value' => json_encode($current, JSON_THROW_ON_ERROR)]
+        );
+    }
+
+    public static function userHasJournalRole(int $contextId, int $userId): bool
+    {
+        return count(self::roles($contextId, $userId)) > 0;
+    }
+
     public static function allowed(int $contextId, int $userId, string $ability): bool
     {
         if (!in_array($ability, ['filters', 'viewColumns', 'viewFlags', 'editFlags', 'settings'], true)) {
@@ -245,6 +317,10 @@ final class OreDashboardAccess
         }
         if ($ability === 'settings') {
             return false;
+        }
+        $override = self::userOverrides($contextId)[(string) $userId] ?? null;
+        if ($override !== null && array_key_exists($ability, $override)) {
+            return count($roles) > 0 && $override[$ability];
         }
         $cfg = self::configuration($contextId)['roles'];
         // A genuine journal membership is required. Multiple roles combine by
@@ -289,10 +365,11 @@ final class OreDashboardAccess
         // Only check the requested operation on records actually associated
         // with the user, not journal-wide merely because a role is enabled.
         $settings = self::configuration($contextId)['roles'];
+        $override = self::userOverrides($contextId)[(string) $userId] ?? null;
         $assignmentRoles = [];
         foreach (['subEditor', 'assistant', 'author'] as $key) {
             $roleId = self::ROLE_IDS[$key];
-            if (in_array($roleId, $roles, true) && $settings[$key][$ability]) {
+            if (in_array($roleId, $roles, true) && ($override[$ability] ?? $settings[$key][$ability])) {
                 $assignmentRoles[] = $roleId;
             }
         }
@@ -310,7 +387,7 @@ final class OreDashboardAccess
             return true;
         }
 
-        if (in_array(Role::ROLE_ID_REVIEWER, $roles, true) && $settings['reviewer'][$ability]) {
+        if (in_array(Role::ROLE_ID_REVIEWER, $roles, true) && ($override[$ability] ?? $settings['reviewer'][$ability])) {
             if (DB::table('review_assignments')
                 ->where('submission_id', $submissionId)
                 ->where('reviewer_id', $userId)
@@ -320,14 +397,9 @@ final class OreDashboardAccess
             }
         }
 
-        // Readers and subscription managers have no editorial assignment.
-        // An explicit grant can apply ONLY to publicly published submissions;
-        // private, draft and declined submissions remain inaccessible. This
-        // plugin never grants access to a native OJS editorial dashboard.
-        if ((in_array(Role::ROLE_ID_READER, $roles, true) && $settings['reader'][$ability]) ||
-            (in_array(Role::ROLE_ID_SUBSCRIPTION_MANAGER, $roles, true) && $settings['subscriptionManager'][$ability])) {
-            return (int) $submission->getData('status') === 3; // published
-        }
+        // Reader-only and subscription-manager accounts have no editorial
+        // submission assignment. A plugin override cannot expose journal-wide
+        // internal flag data or convert those accounts into editors.
         return false;
     }
 }

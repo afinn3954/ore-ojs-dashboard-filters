@@ -1,7 +1,7 @@
 {
   "name": "ore-dashboard-filters",
   "private": true,
-  "version": "0.3.9",
+  "version": "0.4.2",
   "type": "module",
   "scripts": {
     "build": "vite build && node scripts/build-assets.mjs",

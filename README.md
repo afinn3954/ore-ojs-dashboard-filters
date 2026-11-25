@@ -5,11 +5,11 @@ A generic plugin for the **Open Journal Systems (OJS) 3.6** editorial dashboard,
 ## Features
 
 - **Filters:** Publication lifecycle (AO, PMUR, VoR), workflow stage, submission date/time, task or discussion title and status, submission flag, section and category.
-- **Flags:** Custom full names, short labels, icons, colours, ordering and visibility. Editors can assign flags to submissions and filter by them.
+- **Flags:** Custom full names, short labels, icons, colours, ordering and visibility. Editors can assign flags, filter by multiple selected flags (OR), and sort flag names.
 - **Dashboard:** Compact or detailed layouts, configurable columns and date formatting, truncated titles with full details on hover, and expandable reviewer activity indicators.
-- **Hover information:** Full title and corresponding author contacts, submission and updated dates, workflow/publishing stage, assigned stage participants, current-round reviewers and selected flag details.
-- **Access:** Role-based permissions for filters, column visibility and flag viewing/editing. Existing OJS permissions protect author and reviewer information.
-- **Sorting:** Native sorting plus submitted/last-updated date sorting.
+- **Hover information:** Full title and corresponding author contacts, submission and updated dates, workflow/publishing stage, assigned participants, current-round reviewers and selected flag details. A flag badge can also appear within the open submission workflow view.
+- **Access:** Role-based permissions plus journal-specific user overrides for filters, column visibility and flag viewing/editing. Existing OJS permissions protect author and reviewer information.
+- **Sorting:** Native sorting, submitted/last-updated dates and optional ascending/descending flag-name sorting.
 
 ## Install
 
@@ -17,7 +17,7 @@ Copy the complete `oreDashboardFilters` directory into `plugins/generic/` on an 
 
 ## Configure
 
-Open **ORE Dashboard Filters → Settings** in Installed Plugins. Options cover flag definitions, available filters, additional columns, dashboard appearance and user roles.
+Open **ORE Dashboard Filters → Settings** in Installed Plugins. Options cover flag definitions, available filters, additional columns, dashboard appearance, user roles and individual user overrides. Every saved override appears in a table until its role defaults are restored.
 
 | Flag field | Example | Meaning |
 | --- | --- | --- |
@@ -28,13 +28,17 @@ Open **ORE Dashboard Filters → Settings** in Installed Plugins. Options cover 
 
 The flag display options are **icon only**, **icon + short label**, and **icon + full name**. See [Configuration](docs/configuration.md).
 
+## Flag sorting
+
+Click the **FLAG** column heading to cycle through Z–A, A–Z, and normal ordering. The flag sort radio group is no longer present in the Filters dialogue. Journal managers can enable/disable sorting under plugin Settings.
+
 ## Source
 
 The ready-to-use assets are included in `public/build/`. Editable files are in `resources/`. To rebuild, run `npm ci` followed by `npm run build` (Node.js required). The build retains all plugin assets.
 
 ## Compatibility
 
-Target: **OJS 3.6.0.0**. Version 0.3.9.0 includes a QA flag-table installation fix and fluid submission column sizing. Verify functionality and permissions on the target environment before production deployment.
+Target: **OJS 3.6.0.0**. Version 0.4.2.0 includes a persistent table of individually overridden users in Settings. The editable workflow flag has been tested on a local editorial account. **Individual Author overrides have been verified on a local Author account and require a separate QA validation before production deployment.** Do not enable Author or Reader permissions globally as a workaround. This is not approved for QA or production until tested on the target OJS instance.
 
 ## Copyright and licence
 

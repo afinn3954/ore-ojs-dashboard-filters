@@ -181,6 +181,8 @@
     ['oreTaskTitle', 'Editorial task / discussion title'],
     ['oreTaskStatus', 'Task / discussion open or closed'],
     ['oreFlag', 'Filter by submission flag'],
+    ['oreFlagMultiSelect', 'Select multiple flags (any match)'],
+    ['oreFlagSort', 'Sort submissions by flag name'],
     ['oreSection', 'Section'], ['oreCategory', 'Category'],
   ];
   const columnLabels = [
@@ -238,6 +240,7 @@
       }
       section.append(row);
     }
+    renderIndividualPermissions(root, state, section);
     const fixed = make('p', {className: 'ore-settings-hint'},
       'Defaults: Author, Reviewer, Reader and Subscription Manager have no plugin access. Grants do not add editorial-dashboard access; readers and subscription managers can access flags only for published submissions. Enable flag editing for these roles only if you explicitly intend to allow changes to those published records.');
     section.append(fixed);
@@ -260,6 +263,107 @@
       className: 'ore-settings-button ore-settings-primary', disabled: state.busy,
       dataset: {oreAction: 'save-preferences'}}, 'Save permissions and dashboard options');
     section.append(saveButton);
+  }
+
+  function renderIndividualPermissions(root, state, section) {
+    section.append(make('h3',{},'Individual user permissions'));
+    section.append(make('p',{className:'ore-settings-hint'},
+      'Override the role settings for individual users in this journal. Site Administrators and Journal Managers remain unrestricted. Native OJS access rights still apply.'));
+    // Persisted overrides are listed immediately, independent of the search
+    // box. Search is for finding another user; this table is for managing the
+    // exceptions already stored against this journal.
+    const overriddenUsers = Array.isArray(state.overriddenUsers) ? state.overriddenUsers : [];
+    section.append(make('h4', {className: 'ore-user-overrides-heading'},
+      `Users with custom permissions (${overriddenUsers.length})`));
+    if (!overriddenUsers.length) {
+      section.append(make('p', {className: 'ore-settings-hint'},
+        'No individual overrides. All users currently follow their role settings.'));
+    } else {
+      const scroll = make('div', {className: 'ore-user-overrides-scroll', role:'region',
+        'aria-label':'Saved individual user permissions', tabindex:'0'});
+      const table = make('table', {className: 'ore-user-overrides-table'});
+      const thead = make('thead');
+      const headings = make('tr');
+      for (const label of ['User', ...accessLabels.map(([, label]) => label), 'Actions']) {
+        headings.append(make('th', {scope:'col'}, label));
+      }
+      thead.append(headings);
+      table.append(thead);
+      const tbody = make('tbody');
+      for (const user of overriddenUsers) {
+        const abilities = state.userOverrides?.[String(user.id)];
+        if (!abilities) continue;
+        const row = make('tr');
+        const nameCell = make('td');
+        nameCell.append(make('strong', {}, user.fullName || user.username || `User #${user.id}`));
+        if (user.username) nameCell.append(make('span', {className:'ore-user-override-secondary'},
+          `@${user.username}`));
+        if (!user.inJournal) nameCell.append(make('span', {className:'ore-user-override-secondary'},
+          'No longer assigned to this journal'));
+        row.append(nameCell);
+        for (const [ability] of accessLabels) {
+          const value = !!abilities[ability];
+          const cell = make('td', {className:'ore-user-override-ability'});
+          cell.append(make('span', {className:value ? 'ore-user-override-yes' : 'ore-user-override-no'},
+            value ? 'Yes' : 'No'));
+          row.append(cell);
+        }
+        const actions = make('td', {className:'ore-user-override-actions'});
+        actions.append(make('button', {type:'button', className:'ore-settings-button',
+          disabled:state.busy || !user.inJournal,
+          dataset:{oreAction:'select-override',userId:String(user.id)}}, 'Edit'));
+        actions.append(make('button', {type:'button', className:'ore-settings-button',
+          disabled:state.busy,
+          dataset:{oreAction:'reset-override',userId:String(user.id)}}, 'Restore defaults'));
+        row.append(actions);
+        tbody.append(row);
+      }
+      table.append(tbody);
+      scroll.append(table);
+      section.append(scroll);
+      section.append(make('p', {className: 'ore-settings-hint'},
+        'These settings remain until you restore the user’s role defaults.'));
+    }
+    section.append(make('h4', {className:'ore-user-search-heading'}, 'Find another user'));
+    const search = make('input',{type:'search',className:'ore-settings-input',
+      placeholder:'Search by name, username or email (2+ characters)',
+      'aria-label':'Search journal users',value:state.userSearch || '',
+      dataset:{oreUserSearch:'1'}});
+    section.append(search);
+    const results=make('div',{className:'ore-user-search-results'});
+    if (state.userSearch && state.userSearch.length >= 2) {
+      if (state.searchLoading) results.append(make('p',{},'Searching…'));
+      else if (!state.userMatches?.length) results.append(make('p',{},'No journal users found.'));
+      for (const user of state.userMatches || []) {
+        const row=make('div',{className:'ore-user-result'});
+        row.append(make('span',{},`${user.fullName || user.username} · ${user.username} (${user.email})`));
+        row.append(make('button',{type:'button',className:'ore-settings-button',
+          disabled:state.busy,dataset:{oreAction:'select-user',userId:String(user.id)}},'Configure'));
+        results.append(row);
+      }
+    }
+    section.append(results);
+    const selected = state.selectedUser;
+    if (!selected) return;
+    section.append(make('h4',{},`Permissions for ${selected.fullName || selected.username}`));
+    const current = state.userDraft || {};
+    const grid=make('div',{className:'ore-user-permission-grid'});
+    for(const [ability,label] of accessLabels) {
+      const wrapper=make('label',{className:'ore-settings-toggle'});
+      const checkbox=make('input',{type:'checkbox',disabled:state.busy,
+        dataset:{oreUserAbility:ability}});
+      checkbox.checked=!!current[ability];
+      wrapper.append(checkbox,make('span',{},label));grid.append(wrapper);
+    }
+    section.append(grid);
+    const actions=make('div',{className:'ore-user-permission-actions'});
+    actions.append(make('button',{type:'button',className:'ore-settings-button ore-settings-primary',
+      dataset:{oreAction:'save-user'},disabled:state.busy},'Save user permissions'));
+    if(state.userOverrides?.[String(selected.id)])
+      actions.append(make('button',{type:'button',className:'ore-settings-button',
+        dataset:{oreAction:'reset-user'},disabled:state.busy},'Restore role defaults'));
+    section.append(actions);
+    if (state.userMessage) section.append(make('p',{className:'ore-settings-hint'},state.userMessage));
   }
 
   function renderAppearance(root, state, section) {
@@ -288,6 +392,7 @@
       ['showSubmitted','Show separate Submitted column in compact mode'],
       ['showPublishingStage','Show separate Publishing stage column in compact mode'],
       ['showEditorialActivity','Show Editorial activity column in compact mode'],
+      ['showWorkflowFlag','Show assigned flag in submission workflow view'],
     ];
     for(const [key,label] of optional) {
       const wrapper=make('label',{className:'ore-settings-toggle'});
@@ -313,7 +418,9 @@
   async function initialise(root) {
     if (instances.has(root)) return;
     const state = {flags: [], preferences: null, appearance: null, busy: true, dragIndex: null, dirty: false,
-      flagsDirty: false, preferencesDirty: false};
+      flagsDirty: false, preferencesDirty: false,
+      userSearch:'', userMatches:[], userOverrides:{}, overriddenUsers:[], selectedUser:null, userDraft:null,
+      searchLoading:false, userMessage:''};
     instances.set(root, state);
     render(root);
     try {
@@ -341,6 +448,13 @@
       preferenceStatus(root, `Could not load role settings: ${error.message}`, 'error');
     }
     try {
+      const data = await requestJSON(`${root.dataset.apiUrl}/user-permissions`);
+      state.userOverrides = data.overrides || {};
+      state.overriddenUsers = Array.isArray(data.overriddenUsers) ? data.overriddenUsers : [];
+    } catch(error) {
+      preferenceStatus(root,`Individual permissions unavailable: ${error.message}`,'error');
+    }
+    try {
       const data = await requestJSON(`${root.dataset.apiUrl}/appearance`);
       if (!data.appearance) throw new Error('Appearance response missing');
       state.appearance = data.appearance;
@@ -350,6 +464,50 @@
       state.busy = false;
       render(root);
     }
+  }
+
+  async function searchUsers(root, query) {
+    const state=instances.get(root);
+    if(!state || state.busy) return;
+    state.userSearch=query;
+    if(query.length < 2) {state.userMatches=[];state.searchLoading=false;renderPreferences(root,state);return;}
+    const requestId=state.userRequestId=(state.userRequestId||0)+1;
+    state.searchLoading=true;
+    try {
+      const data=await requestJSON(`${root.dataset.apiUrl}/user-permissions?q=${encodeURIComponent(query)}`);
+      if(requestId !== state.userRequestId) return;
+      state.userMatches=data.users || [];
+      state.userOverrides=data.overrides || {};
+      state.overriddenUsers=Array.isArray(data.overriddenUsers) ? data.overriddenUsers : [];
+    } catch(error) { if(requestId===state.userRequestId)state.userMessage=error.message; }
+    finally {if(requestId===state.userRequestId){
+      state.searchLoading=false;renderPreferences(root,state);
+      const input=root.querySelector('[data-ore-user-search]');
+      if(input && state.userSearch===query){input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+    }}
+  }
+
+  async function saveIndividual(root, reset=false, overrideUserId=null) {
+    const state=instances.get(root);
+    const userId=overrideUserId ?? state?.selectedUser?.id;
+    if(!state || state.busy || !userId || (!reset && !state.selectedUser)) return;
+    const token=window.pkp?.currentUser?.csrfToken;
+    if(!token){state.userMessage='Missing OJS CSRF token';renderPreferences(root,state);return;}
+    state.busy=true;
+    try {
+      const data=await requestJSON(`${root.dataset.apiUrl}/user-permissions`,{
+        method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json',
+          'X-Csrf-Token':token,'X-Http-Method-Override':'PUT'},
+        body:JSON.stringify({userId,abilities:reset?null:state.userDraft}),
+      });
+      state.userOverrides=data.overrides || {};
+      state.overriddenUsers=Array.isArray(data.overriddenUsers) ? data.overriddenUsers : [];
+      if(reset && String(state.selectedUser?.id)===String(userId)) {
+        state.selectedUser=null;state.userDraft=null;
+      }
+      state.userMessage=reset?'Role defaults restored.':'User permissions saved. Refresh the dashboard to apply.';
+    } catch(error){state.userMessage=`Could not save: ${error.message}`;}
+    finally{state.busy=false;renderPreferences(root,state);}
   }
 
   function synchroniseColourInputs(row, hex) {
@@ -483,6 +641,38 @@
     if (action === 'save') return void save(root);
     if (action === 'save-preferences') return void savePreferences(root);
     if (action === 'save-appearance') return void saveAppearance(root);
+    if (action === 'save-user') return void saveIndividual(root);
+    if (action === 'reset-user') {
+      if (!window.confirm('Restore role defaults for this user?')) return;
+      return void saveIndividual(root,true);
+    }
+    if (action === 'select-override') {
+      const user=state.overriddenUsers.find(u=>String(u.id)===button.dataset.userId);
+      if(!user || !user.inJournal)return;
+      state.selectedUser=user;
+      state.userDraft={...state.userOverrides[String(user.id)]};
+      state.userMessage='Edit these permissions and save, or restore role defaults.';
+      renderPreferences(root,state);
+      root.querySelector('[data-ore-action="save-user"]')?.scrollIntoView?.({block:'nearest'});
+      return;
+    }
+    if (action === 'reset-override') {
+      const user=state.overriddenUsers.find(u=>String(u.id)===button.dataset.userId);
+      if(!user)return;
+      if(!window.confirm(`Restore role defaults for ${user.fullName || user.username || 'this user'}?`))return;
+      return void saveIndividual(root,true,user.id);
+    }
+    if (action === 'select-user') {
+      const user=state.userMatches.find(u=>String(u.id)===button.dataset.userId);
+      if(!user)return;
+      state.selectedUser=user;
+      state.userDraft=state.userOverrides[String(user.id)]
+        ? {...state.userOverrides[String(user.id)]}
+        : {...(user.effective || {filters:false,viewColumns:false,viewFlags:false,editFlags:false})};
+      state.userMessage='Tick the permitted capabilities and save.';
+      renderPreferences(root,state);
+      return;
+    }
     if (action === 'icon' && icons.names.includes(button.dataset.icon) && state.flags[index]) {
       state.flags[index].icon=button.dataset.icon;
       state.flagsDirty=true;state.dirty=true;
@@ -506,7 +696,16 @@
   });
 
   document.addEventListener('input', event => {
-    const field = event.target;
+    const field=event.target;
+    if(field.matches?.('[data-ore-user-search]')) {
+      const root=field.closest(rootSelector),state=root&&instances.get(root);
+      if(!state||state.busy)return;
+      const query=field.value.trim();
+      state.userSearch=query;
+      clearTimeout(state.searchTimer);
+      state.searchTimer=setTimeout(()=>void searchUsers(root,query),280);
+      return;
+    }
     const row = field.closest?.('[data-ore-row]');
     const root = row?.closest(rootSelector);
     const state = root && instances.get(root);
@@ -532,6 +731,17 @@
 
   document.addEventListener('change', event => {
     const field = event.target;
+    if (field.dataset?.oreUserAbility) {
+      const root=field.closest(rootSelector),state=root&&instances.get(root);
+      if(!state?.userDraft || state.busy)return;
+      const ability=field.dataset.oreUserAbility;
+      if(!Object.hasOwn(state.userDraft,ability))return;
+      state.userDraft[ability]=!!field.checked;
+      if(ability==='viewFlags' && !field.checked)state.userDraft.editFlags=false;
+      if(ability==='editFlags' && field.checked)state.userDraft.viewFlags=true;
+      state.userMessage='Unsaved user permissions';
+      renderPreferences(root,state);return;
+    }
     if (field.dataset?.oreAppearanceKey) {
       const root=field.closest(rootSelector);const state=root && instances.get(root);
       if(!state || state.busy || !state.appearance) return;
@@ -666,6 +876,8 @@
 .ore-role-headings{background:#f1f5f9;font-size:12px}
 .ore-settings-toggle{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
 .ore-settings-options-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:10px;margin:12px 0}
+.ore-user-search-results{margin:8px 0 12px}.ore-user-result{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #e2e8f0}.ore-user-permission-grid{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px;padding:12px;background:#f8fafc}.ore-user-permission-actions{display:flex;gap:10px;flex-wrap:wrap}
+.ore-user-overrides-heading{margin:16px 0 6px}.ore-user-search-heading{margin:16px 0 8px}.ore-user-overrides-scroll{overflow-x:auto;max-width:100%;border:1px solid #dce5ec;border-radius:6px}.ore-user-overrides-table{width:100%;border-collapse:collapse;font-size:12px;min-width:650px}.ore-user-overrides-table th{font-weight:700;background:#f1f5f9;color:#30445b;text-align:left;padding:9px 7px;border-bottom:1px solid #cad5e0}.ore-user-overrides-table td{padding:8px 7px;border-bottom:1px solid #e2e8f0;vertical-align:middle}.ore-user-overrides-table tbody tr:last-child td{border-bottom:0}.ore-user-overrides-table th:nth-child(n+2):nth-child(-n+5){text-align:center}.ore-user-override-secondary{display:block;color:#62748a;font-size:11px;margin-top:2px}.ore-user-override-ability{text-align:center}.ore-user-override-yes{color:#166534;font-weight:700}.ore-user-override-no{color:#64748b}.ore-user-override-actions{white-space:nowrap}.ore-user-override-actions button{margin:2px 3px 2px 0}
 .ore-settings-primary{margin:16px 0;background:#095b92!important;color:white!important}.ore-appearance-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:9px}.ore-appearance-select{display:flex;flex-direction:column;gap:4px}
 @media(max-width:640px){.ore-role-headings{display:none}.ore-role-row{grid-template-columns:1fr}.ore-settings-options-grid{grid-template-columns:1fr}}
 .ore-dashboard-settings button:disabled,.ore-dashboard-settings input:disabled{opacity:.55;cursor:not-allowed}

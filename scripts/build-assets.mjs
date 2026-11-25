@@ -5,7 +5,7 @@ const root=resolve(import.meta.dirname,'..');
 const src=join(root,'resources');
 const dst=join(root,'public','build');
 await mkdir(dst,{recursive:true});
-for(const name of ['ore-v2.js','ore-settings.js','ore-flag-icons.js','ore-settings-refined.js']){
+for(const name of ['ore-v2.js','ore-settings.js','ore-flag-icons.js','ore-settings-refined.js','ore-workflow-flag.js']){
  await copyFile(join(src,'js',name),join(dst,name));
 }
 await copyFile(join(src,'css','ore-dashboard-layout.css'),join(dst,'ore-dashboard-layout.css'));

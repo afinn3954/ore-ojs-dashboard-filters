@@ -115,12 +115,12 @@ class OreDashboardFlagSettingsModal
         // the editor reliably even when the grid was loaded asynchronously.
         $scriptUrl = htmlspecialchars(
             rtrim($request->getBaseUrl(), '/')
-                . '/plugins/generic/oreDashboardFilters/public/build/ore-settings.js?v=0.3.9.0-iconpicker1',
+                . '/plugins/generic/oreDashboardFilters/public/build/ore-settings.js?v=0.4.2.0',
             ENT_QUOTES | ENT_SUBSTITUTE,
             'UTF-8'
         );
         $iconsUrl = htmlspecialchars(
-            rtrim($request->getBaseUrl(), '/') . '/plugins/generic/oreDashboardFilters/public/build/ore-flag-icons.js?v=0.3.9.0',
+            rtrim($request->getBaseUrl(), '/') . '/plugins/generic/oreDashboardFilters/public/build/ore-flag-icons.js?v=0.4.2.0',
             ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'
         );
         $fallbackRows = '';

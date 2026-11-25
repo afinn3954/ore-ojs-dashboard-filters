@@ -58,7 +58,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
                 // it the picker initially has only the fallback 'flag' icon.
                 $nativeSettingsTemplateManager->addJavaScript(
                     'OreDashboardFiltersNativeFlagIcons',
-                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-flag-icons.js?v=0.3.9.0",
+                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-flag-icons.js?v=0.4.2.0",
                     [
                         'inline' => false,
                         'contexts' => ['backend'],
@@ -67,7 +67,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
                 );
                 $nativeSettingsTemplateManager->addJavaScript(
                     'OreDashboardFiltersNativeSettings',
-                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.3.9.0-iconpicker1",
+                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.4.2.0",
                     [
                         'inline' => false,
                         'contexts' => ['backend'],
@@ -137,7 +137,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
             $pluginVersion = $this->getCurrentVersion();
             $assetVersion = $pluginVersion
                 ? $pluginVersion->getVersionString()
-                : '0.3.9.0';
+                : '0.4.0.0-dev1';
 
             $templateMgr->addJavaScript(
                 'OreDashboardFilters',

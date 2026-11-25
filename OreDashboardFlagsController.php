@@ -68,6 +68,10 @@ class OreDashboardFlagsController extends PKPBaseController
             ->name('ore.dashboard.flags.preferences')->middleware([self::roleAuthorizer($managers)]);
         Route::put('preferences', $this->savePreferences(...))
             ->name('ore.dashboard.flags.preferences.save')->middleware([self::roleAuthorizer($managers)]);
+        Route::get('user-permissions', $this->getUserPermissions(...))
+            ->name('ore.dashboard.flags.userPermissions')->middleware([self::roleAuthorizer($managers)]);
+        Route::put('user-permissions', $this->saveUserPermissions(...))
+            ->name('ore.dashboard.flags.userPermissions.save')->middleware([self::roleAuthorizer($managers)]);
         Route::get('appearance', $this->getAppearance(...))
             ->name('ore.dashboard.flags.appearance')->middleware([self::roleAuthorizer($managers)]);
         Route::put('appearance', $this->saveAppearance(...))
@@ -412,6 +416,126 @@ class OreDashboardFlagsController extends PKPBaseController
         $identity = $this->identity();
         OreDashboardAccess::saveConfiguration($identity[0], $valid);
         return response()->json(['preferences' => OreDashboardAccess::configuration($identity[0])]);
+    }
+
+    /**
+     * Read the users who have explicit permissions, using one journal-scoped
+     * lookup. Retain orphaned override IDs in the manager's list so they can
+     * still be revoked after a user leaves the journal.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getOverriddenUsers(int $contextId, array $overrides): array
+    {
+        if (!$overrides) return [];
+
+        $ids = array_map('intval', array_keys($overrides));
+        $found = [];
+        $journalUsers = Repo::user()->getCollector()
+            ->filterByContextIds([$contextId])
+            ->filterByUserIds($ids)
+            ->getMany();
+
+        foreach ($journalUsers as $user) {
+            $id = (int) $user->getId();
+            if (!array_key_exists((string) $id, $overrides)) continue;
+            $found[(string) $id] = [
+                'id' => $id,
+                'username' => (string) $user->getUsername(),
+                'fullName' => (string) $user->getFullName(),
+                'email' => (string) $user->getData('email'),
+                'inJournal' => true,
+            ];
+        }
+
+        foreach (array_keys($overrides) as $id) {
+            if (isset($found[(string) $id])) continue;
+            $found[(string) $id] = [
+                'id' => (int) $id,
+                'username' => '',
+                'fullName' => 'User #' . $id,
+                'email' => '',
+                'inJournal' => false,
+            ];
+        }
+
+        $users = array_values($found);
+        usort($users, static fn (array $a, array $b): int =>
+            strcasecmp($a['fullName'] ?: $a['username'], $b['fullName'] ?: $b['username'])
+            ?: ($a['id'] <=> $b['id'])
+        );
+        return $users;
+    }
+
+    /** Search journal users, and read saved per-user permissions (manager only). */
+    public function getUserPermissions(Request $request): JsonResponse
+    {
+        if (!$this->isManager()) return response()->json(['error' => 'Journal manager required'], 403);
+        [$contextId] = $this->identity();
+        $searchTerm = $request->query('q', '');
+        $search = is_string($searchTerm) ? trim($searchTerm) : '';
+        if (mb_strlen($search) > 60) return response()->json(['error' => 'Search too long'], 422);
+        $overrides = OreDashboardAccess::userOverrides($contextId);
+        $users = [];
+        if (mb_strlen($search) >= 2) {
+            // Use OJS's native user search to find username, email AND
+            // localised given/family names, scoped to this journal only.
+            $users = Repo::user()->getCollector()
+                ->filterByContextIds([$contextId])
+                ->searchPhrase($search)->limit(15)->getMany()
+                ->map(static fn ($user) => [
+                    'id' => (int) $user->getId(),
+                    'username' => (string) $user->getUsername(),
+                    'fullName' => (string) $user->getFullName(),
+                    'email' => (string) $user->getData('email'),
+                    'effective' => [
+                        'filters' => OreDashboardAccess::allowed($contextId, (int) $user->getId(), 'filters'),
+                        'viewColumns' => OreDashboardAccess::allowed($contextId, (int) $user->getId(), 'viewColumns'),
+                        'viewFlags' => OreDashboardAccess::allowed($contextId, (int) $user->getId(), 'viewFlags'),
+                        'editFlags' => OreDashboardAccess::allowed($contextId, (int) $user->getId(), 'editFlags'),
+                    ],
+                ])->values()->all();
+        }
+        return response()->json([
+            'users' => $users,
+            'overrides' => $overrides,
+            'overriddenUsers' => $this->getOverriddenUsers($contextId, $overrides),
+        ]);
+    }
+
+    /** Save or remove a complete user-specific override. Native OJS permissions remain enforced. */
+    public function saveUserPermissions(Request $request): JsonResponse
+    {
+        if (!$this->isManager()) return response()->json(['error' => 'Journal manager required'], 403);
+        [$contextId] = $this->identity();
+        $userId = filter_var($request->input('userId'), FILTER_VALIDATE_INT);
+        $abilities = $request->input('abilities');
+        if (!$userId || $userId < 1 ||
+            ($abilities !== null && !OreDashboardAccess::validateAbilities($abilities))) {
+            return response()->json(['error' => 'Invalid user permissions'], 422);
+        }
+        // Managers must be able to revoke saved overrides for users who
+        // have since left the journal, but cannot grant them new access.
+        $isRevokingSavedOverride = $abilities === null &&
+            array_key_exists((string) $userId, OreDashboardAccess::userOverrides($contextId));
+        if (!$isRevokingSavedOverride && !OreDashboardAccess::userHasJournalRole($contextId, $userId)) {
+            return response()->json(['error' => 'User does not belong to this journal'], 422);
+        }
+        $roles = OreDashboardAccess::roles($contextId, $userId);
+        if (in_array(Role::ROLE_ID_SITE_ADMIN, $roles, true) ||
+            in_array(Role::ROLE_ID_MANAGER, $roles, true)) {
+            return response()->json(['error' => 'Administrator and journal manager access is fixed'], 422);
+        }
+        try {
+            OreDashboardAccess::saveUserOverride($contextId, $userId, $abilities);
+        } catch (\InvalidArgumentException $error) {
+            return response()->json(['error' => $error->getMessage()], 422);
+        }
+        $overrides = OreDashboardAccess::userOverrides($contextId);
+        return response()->json([
+            'overrides' => $overrides,
+            'overriddenUsers' => $this->getOverriddenUsers($contextId, $overrides),
+        ]);
     }
 
 }
