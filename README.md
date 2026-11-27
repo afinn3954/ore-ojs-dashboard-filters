@@ -34,7 +34,7 @@ Click the **FLAG** column heading to cycle through Z–A, A–Z, and normal orde
 
 ## Source
 
-The ready-to-use assets are included in `public/build/`. Editable files are in `resources/`. To rebuild, run `npm ci` followed by `npm run build` (Node.js required). The build retains all plugin assets.
+The ready-to-use assets are included in `public/build/`. Editable files are in `resources/`. To rebuild, run `npm ci` followed by `npm run build` (Node.js required). The build produces one bundle per page type (dashboard, settings) plus the stylesheet; see `vite.config.js` and `resources/js/entries/` for the entries.
 
 ## Compatibility
 
