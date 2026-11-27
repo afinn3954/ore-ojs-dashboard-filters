@@ -5,6 +5,11 @@
 (() => {
   'use strict';
   if (window.__oreWorkflowFlagMounted) return;
+  // Bundled with the dashboard; only run when the user may see flags and
+  // the journal shows them in the workflow.
+  const initialConfig = window.oreDashboardFiltersV3Config;
+  if (initialConfig?.access?.viewFlags !== true ||
+      initialConfig.appearance?.showWorkflowFlag === false) return;
   window.__oreWorkflowFlagMounted = true;
 
   let activeId = null;
