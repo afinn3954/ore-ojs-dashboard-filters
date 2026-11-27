@@ -46,36 +46,8 @@ class OreDashboardFiltersPlugin extends GenericPlugin
     {
         $success = parent::register($category, $path, $mainContextId);
         require_once __DIR__ . '/OreDashboardAccess.php';
-        // Native OJS Installed Plugins > Settings modal browser asset.
-        // Never bootstrap template JS during CLI installation or upgrades.
-        if ($success && PHP_SAPI !== 'cli') {
-            $nativeSettingsRequest = Application::get()->getRequest();
-            $nativeSettingsRouter = $nativeSettingsRequest->getRouter();
-            if ($nativeSettingsRouter instanceof PKPPageRouter &&
-                in_array($nativeSettingsRouter->getRequestedPage($nativeSettingsRequest), ['admin', 'management'], true)) {
-                $nativeSettingsTemplateManager = TemplateManager::getManager($nativeSettingsRequest);
-                // Load the icon catalogue before the settings editor. Without
-                // it the picker initially has only the fallback 'flag' icon.
-                $nativeSettingsTemplateManager->addJavaScript(
-                    'OreDashboardFiltersNativeFlagIcons',
-                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-flag-icons.js?v=0.4.2.0",
-                    [
-                        'inline' => false,
-                        'contexts' => ['backend'],
-                        'priority' => TemplateManager::STYLE_SEQUENCE_LATE,
-                    ]
-                );
-                $nativeSettingsTemplateManager->addJavaScript(
-                    'OreDashboardFiltersNativeSettings',
-                    "{$nativeSettingsRequest->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings.js?v=0.4.2.0",
-                    [
-                        'inline' => false,
-                        'contexts' => ['backend'],
-                        'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
-                    ]
-                );
-            }
-        }
+        // The settings modal loads its own bundle (OreDashboardFlagSettingsModal),
+        // so admin and management pages get no assets from this plugin.
 
         if (!$success || !$this->getEnabled($mainContextId)) {
             return $success;
@@ -90,22 +62,10 @@ class OreDashboardFiltersPlugin extends GenericPlugin
         OreDashboardFiltersExtensions::register($this);
 
         $request = Application::get()->getRequest();
-            /* ORE SETTINGS UI v6 BEGIN */
-            $oreSettingsUiManager = \APP\template\TemplateManager::getManager($request);
-            $oreSettingsUiManager->addJavaScript(
-                'OreDashboardFiltersSettingsRefined',
-                "{$request->getBaseUrl()}/{$this->getPluginPath()}/public/build/ore-settings-refined.js?v=0.3.9-settings6",
-                [
-                    'inline' => false,
-                    'contexts' => ['backend'],
-                    'priority' => \APP\template\TemplateManager::STYLE_SEQUENCE_LAST,
-                ]
-            );
-            /* ORE SETTINGS UI v6 END */
         $router = $request->getRouter();
 
-        // Load only on dashboard pages. The JavaScript also checks that the
-        // active Pinia store is the editorial dashboard before adding fields.
+        // Config for the native filter fields. The dashboard bundle itself is
+        // registered by OreDashboardFiltersExtensions.
         if ($router instanceof PKPPageRouter && $router->getRequestedPage($request) === 'dashboard' && OreDashboardAccess::allowsCurrentUser('filters')) {
             $templateMgr = TemplateManager::getManager($request);
             $nativeFilterConfig = json_encode(
@@ -133,25 +93,20 @@ class OreDashboardFiltersPlugin extends GenericPlugin
                     ]
                 );
             }
-
-            $pluginVersion = $this->getCurrentVersion();
-            $assetVersion = $pluginVersion
-                ? $pluginVersion->getVersionString()
-                : '0.4.0.0-dev1';
-
-            $templateMgr->addJavaScript(
-                'OreDashboardFilters',
-                "{$request->getBaseUrl()}/{$this->getPluginPath()}/public/build/build.iife.js"
-                    . '?v=' . rawurlencode($assetVersion),
-                [
-                    'inline' => false,
-                    'contexts' => ['backend'],
-                    'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
-                ]
-            );
         }
 
         return $success;
+    }
+
+    /**
+     * URL of a file in public/build, cache-busted with the installed plugin
+     * version so every asset changes URL on upgrade.
+     */
+    public function assetUrl($request, string $file): string
+    {
+        $version = $this->getCurrentVersion()?->getVersionString() ?? 'dev';
+        return "{$request->getBaseUrl()}/{$this->getPluginPath()}/public/build/{$file}?v="
+            . rawurlencode($version);
     }
 
     /**
@@ -195,7 +150,7 @@ class OreDashboardFiltersPlugin extends GenericPlugin
             return parent::manage($args, $request);
         }
         require_once __DIR__ . '/OreDashboardFlagSettingsModal.php';
-        return OreDashboardFlagSettingsModal::render($request);
+        return OreDashboardFlagSettingsModal::render($request, $this);
     }
 
     /** @copydoc Plugin::getDisplayName() */

@@ -49,7 +49,7 @@ class OreDashboardFlagSettingsModal
             ->exists();
     }
 
-    public static function render($request): JSONMessage
+    public static function render($request, OreDashboardFiltersPlugin $plugin): JSONMessage
     {
         $context = $request->getContext();
         $user = $request->getUser();
@@ -114,14 +114,9 @@ class OreDashboardFlagSettingsModal
         // insert this server response; a script tag inside the response loads
         // the editor reliably even when the grid was loaded asynchronously.
         $scriptUrl = htmlspecialchars(
-            rtrim($request->getBaseUrl(), '/')
-                . '/plugins/generic/oreDashboardFilters/public/build/ore-settings.js?v=0.4.2.0',
+            $plugin->assetUrl($request, 'ore-settings.js'),
             ENT_QUOTES | ENT_SUBSTITUTE,
             'UTF-8'
-        );
-        $iconsUrl = htmlspecialchars(
-            rtrim($request->getBaseUrl(), '/') . '/plugins/generic/oreDashboardFilters/public/build/ore-flag-icons.js?v=0.4.2.0',
-            ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'
         );
         $fallbackRows = '';
         $fallbackContextId = $contextId;
@@ -166,7 +161,6 @@ class OreDashboardFlagSettingsModal
         <div data-ore-preferences></div>
     </section>
 </div>
-<script src="{$iconsUrl}"></script>
 <script src="{$scriptUrl}"></script>
 HTML;
 
