@@ -9,6 +9,11 @@
         return;
     }
 
+    // Bundled with the dashboard; the filters need the filter permission.
+    if (window.oreDashboardFiltersV3Config?.access?.filters !== true) {
+        return;
+    }
+
     const OPTION_FILTER_NAMES = [
         'oreVersionStage',
         'stageIds',

@@ -118,7 +118,7 @@ class OreDashboardFlagsController extends PKPBaseController
         );
     }
 
-    private function definitionsTableExists(): bool
+    public static function definitionsTableExists(): bool
     {
         return DB::getSchemaBuilder()->hasTable('ore_dashboard_flag_definitions');
     }
@@ -128,7 +128,7 @@ class OreDashboardFlagsController extends PKPBaseController
         return DB::getSchemaBuilder()->hasTable('ore_dashboard_flags');
     }
 
-    private function ensureDefaultDefinitions(int $contextId): void
+    public static function ensureDefaultDefinitions(int $contextId): void
     {
         if (DB::table('ore_dashboard_flag_definitions')->where('context_id', $contextId)->exists()) {
             return;
@@ -147,7 +147,7 @@ class OreDashboardFlagsController extends PKPBaseController
 
     /** Existing definitions retain their stable IDs and the original table schema.
      * New visual metadata is in a separate, journal-scoped plugin setting. */
-    private function presentation(int $contextId): array
+    public static function presentation(int $contextId): array
     {
         $raw = DB::table('plugin_settings')
             ->where('plugin_name', 'oredashboardfiltersplugin')
@@ -169,10 +169,10 @@ class OreDashboardFlagsController extends PKPBaseController
             + ['enabled' => true];
     }
 
-    private function definitions(int $contextId): array
+    public static function definitions(int $contextId): array
     {
-        $this->ensureDefaultDefinitions($contextId);
-        $metadata = $this->presentation($contextId);
+        self::ensureDefaultDefinitions($contextId);
+        $metadata = self::presentation($contextId);
         return DB::table('ore_dashboard_flag_definitions')
             ->where('context_id', $contextId)
             ->orderBy('sort_order')->orderBy('flag_key')
@@ -222,7 +222,7 @@ class OreDashboardFlagsController extends PKPBaseController
     /** POST /ore-dashboard-flags {submissionId,flag} */
     public function save(Request $request): JsonResponse
     {
-        if (!$this->flagsTableExists() || !$this->definitionsTableExists()) {
+        if (!$this->flagsTableExists() || !self::definitionsTableExists()) {
             return response()->json(['error' => 'ORE flag tables are not installed'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
         $submissionId = filter_var($request->input('submissionId'), FILTER_VALIDATE_INT);
@@ -245,8 +245,8 @@ class OreDashboardFlagsController extends PKPBaseController
             return response()->json(['error' => 'No editorial access to this submission'], Response::HTTP_FORBIDDEN);
         }
         [$contextId, $userId] = $this->identity();
-        $this->ensureDefaultDefinitions($contextId);
-        if ($flag !== '' && !collect($this->definitions($contextId))->contains(
+        self::ensureDefaultDefinitions($contextId);
+        if ($flag !== '' && !collect(self::definitions($contextId))->contains(
                 static fn (array $definition) => $definition['id'] === $flag && $definition['enabled'])) {
             return response()->json(['error' => 'Unknown flag for this journal'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -265,7 +265,7 @@ class OreDashboardFlagsController extends PKPBaseController
     /** GET /ore-dashboard-flags/definitions */
     public function getDefinitions(Request $request): JsonResponse
     {
-        if (!$this->definitionsTableExists()) {
+        if (!self::definitionsTableExists()) {
             return response()->json(['error' => 'ORE definitions table is not installed'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
         $identity = $this->identity();
@@ -276,7 +276,7 @@ class OreDashboardFlagsController extends PKPBaseController
             return response()->json(['error' => 'Flag viewing is disabled for this role'], Response::HTTP_FORBIDDEN);
         }
         return response()->json([
-            'flags' => $this->definitions($identity[0]),
+            'flags' => self::definitions($identity[0]),
             'canManage' => $this->isManager(),
         ], Response::HTTP_OK);
     }
@@ -284,7 +284,7 @@ class OreDashboardFlagsController extends PKPBaseController
     /** PUT /ore-dashboard-flags/definitions {flags:[{id?,label,color},...]} */
     public function saveDefinitions(Request $request): JsonResponse
     {
-        if (!$this->definitionsTableExists() || !$this->flagsTableExists()) {
+        if (!self::definitionsTableExists() || !$this->flagsTableExists()) {
             return response()->json(['error' => 'ORE flag tables are not installed'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
         if (!$this->isManager()) {
@@ -295,7 +295,7 @@ class OreDashboardFlagsController extends PKPBaseController
             return response()->json(['error' => 'Supply between 1 and 30 ordered flags'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         [$contextId] = $this->identity();
-        $this->ensureDefaultDefinitions($contextId);
+        self::ensureDefaultDefinitions($contextId);
         $existing = DB::table('ore_dashboard_flag_definitions')->where('context_id', $contextId)
             ->pluck('flag_key')->all();
         $existingSet = array_fill_keys($existing, true);
@@ -373,7 +373,7 @@ class OreDashboardFlagsController extends PKPBaseController
                     ->whereIn('flag_key', $removed)->delete();
             }
         });
-        return response()->json(['flags' => $this->definitions($contextId)], Response::HTTP_OK);
+        return response()->json(['flags' => self::definitions($contextId)], Response::HTTP_OK);
     }
     /** Separate appearance settings avoid changing existing role preference structure. */
     public function getAppearance(Request $request): JsonResponse

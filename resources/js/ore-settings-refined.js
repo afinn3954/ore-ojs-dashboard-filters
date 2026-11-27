@@ -5,6 +5,8 @@
  */
 (function () {
   'use strict';
+  // The settings modal may load this bundle again each time it opens.
+  if (window.ORESettingsRefinementV6) { window.ORESettingsRefinementV6.refresh(); return; }
   const NS = 'ore-settings-v6';
   const STYLE_ID = `${NS}-style`;
   const FIELD_NAMES = ['Full name', 'Short label'];

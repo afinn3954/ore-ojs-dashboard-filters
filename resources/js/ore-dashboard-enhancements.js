@@ -488,6 +488,12 @@
   }
   function loadFlagDefinitions() {
     if (flagDefinitionPromise) return flagDefinitionPromise;
+    const inline = window.oreDashboardFiltersV3Config?.flagDefinitions;
+    if (Array.isArray(inline)) {
+      receiveFlags(inline);
+      schedule();
+      return (flagDefinitionPromise = Promise.resolve(flagDefinitionsReady));
+    }
     const url = flagAPI();
     if (!url) return Promise.resolve(false);
     flagDefinitionPromise = readJSON(url)

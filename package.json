@@ -4,7 +4,7 @@
   "version": "0.4.2",
   "type": "module",
   "scripts": {
-    "build": "vite build && node scripts/build-assets.mjs",
+    "build": "rm -rf public/build && vite build --mode dashboard && vite build --mode settings && node scripts/build-assets.mjs",
     "build:assets": "node scripts/build-assets.mjs",
     "check": "node --check resources/js/ore-v3.js && node --check resources/js/ore-dashboard-enhancements.js && node --check resources/js/ore-settings.js && node --check resources/js/ore-settings-refined.js"
   },
