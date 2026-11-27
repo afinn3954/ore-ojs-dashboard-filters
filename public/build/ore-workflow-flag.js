@@ -51,6 +51,18 @@
   }
 
   function chooseContainer(element) {
+    // OJS 3.6 renders Publication controls in two separate flex items:
+    // left for submission language/version, right for actions (for example,
+    // Schedule for Publication). The former absolute positioning could climb
+    // to the shared container and overlap buttons in the right-hand item.
+    // Place the badge IN FLOW within the language component instead.
+    const publicationLeft = element.closest('[data-cy="workflow-controls-left"]');
+    if (publicationLeft) {
+      const languageLine = element.parentElement;
+      return {element: languageLine && publicationLeft.contains(languageLine)
+        ? languageLine : publicationLeft, inline: true};
+    }
+
     let parent = element;
     // Use the actual submission-language row when it is available. In the OJS
     // workflow drawer the row expands across the main content pane, but it is

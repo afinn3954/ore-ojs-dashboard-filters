@@ -90,7 +90,7 @@ class OreDashboardFiltersExtensions
         if ($canViewFlags && OreDashboardAccess::appearance($contextId)['showWorkflowFlag']) {
             $templateManager->addJavaScript(
                 'OreDashboardWorkflowFlag',
-                "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-workflow-flag.js?v=0.4.2.0",
+                "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-workflow-flag.js?v=0.4.2.1",
                 ['inline' => false, 'contexts' => ['backend'],
                  'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
             );

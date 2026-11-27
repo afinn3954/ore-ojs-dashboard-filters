@@ -1,3 +1,8 @@
+## 0.4.2.1 (27 November 2026, local QA test)
+
+- Keep the editable workflow flag inside OJS Publication's left-hand language controls, in the normal layout flow, so it cannot cover Schedule for Publication or other native action buttons.
+- Preserve workflow flag placement on Submission and Review, permissions, flag saving, filters, sorting, and all other plugin behaviour.
+
 ## 0.4.2.0 (25 November 2026, local test candidate)
 
 - List users with saved individual permission overrides automatically when plugin Settings opens.

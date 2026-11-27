@@ -38,7 +38,7 @@ The ready-to-use assets are included in `public/build/`. Editable files are in `
 
 ## Compatibility
 
-Target: **OJS 3.6.0.0**. Version 0.4.2.0 includes a persistent table of individually overridden users in Settings. The editable workflow flag has been tested on a local editorial account. **Individual Author overrides have been verified on a local Author account and require a separate QA validation before production deployment.** Do not enable Author or Reader permissions globally as a workaround. This is not approved for QA or production until tested on the target OJS instance.
+Target: **OJS 3.6.0.0**. Version 0.4.2.1 includes the Publication workflow flag placement fix and a persistent table of individually overridden users in Settings. The editable workflow flag has been tested on a local editorial account. **Individual Author overrides have been verified on a local Author account and require a separate QA validation before production deployment.** Do not enable Author or Reader permissions globally as a workaround. This is not approved for QA or production until tested on the target OJS instance.
 
 ## Copyright and licence
 

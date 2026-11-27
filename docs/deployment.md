@@ -13,7 +13,7 @@
 3. Register or update the plugin using the method supported by that OJS installation and enable it under **Installed Plugins**.
 4. Open **Installed Plugins → ORE Dashboard Filters → Settings** as a site administrator or journal manager. This automatically creates the two flag tables if they do not exist. The QA database user must be permitted to create tables on first use.
 5. Save a test flag and check it is available on the dashboard. Existing flag definitions and assignments are preserved.
-6. Clear the appropriate application and browser asset caches and reload the editorial dashboard. Hard refresh to load the new 0.4.2.0 assets.
+6. Clear the appropriate application and browser asset caches and reload the editorial dashboard. Hard refresh to load the new 0.4.2.1 workflow flag asset.
 
 Do not install the old `oreDashboardCompact` companion plugin or any of the local 8083 repair patches. The consolidated source includes those enhancements.
 
