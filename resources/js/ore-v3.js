@@ -159,6 +159,16 @@
     return data;
   }
 
+  // Definitions ship in the inline config; the API is only a fallback.
+  async function loadDefinitions(store) {
+    let flags = config.flagDefinitions;
+    if (!Array.isArray(flags)) flags = (await fetchJson(`${apiUrl}/definitions`)).flags;
+    if (Array.isArray(flags)) {
+      store.oreDefinitions = flags;
+      applyDefinitionOptions(store);
+    }
+  }
+
   function withCsrf(method, body) {
     return {
       method: method === 'PUT' ? 'POST' : method,
@@ -351,12 +361,7 @@
           {deep: true, immediate: true, flush: 'sync'});
       }
       if (apiUrl && access.viewFlags) {
-        fetchJson(`${apiUrl}/definitions`).then(data => {
-          if (Array.isArray(data.flags)) {
-            store.oreDefinitions = data.flags;
-            applyDefinitionOptions(store);
-          }
-        }).catch(error => console.warn('[ORE Dashboard Filters] Author flag definitions unavailable', error));
+        loadDefinitions(store).catch(error => console.warn('[ORE Dashboard Filters] Author flag definitions unavailable', error));
         let requestNumber = 0;
         watch(() => (store.submissions || []).map(item => Number(item.id)).join(','), async ids => {
           if (!ids) return;
@@ -508,12 +513,7 @@
       () => reconcile(store), {deep: true, immediate: true, flush: 'sync'});
 
     if (!apiUrl || !access.viewFlags) return;
-    fetchJson(`${apiUrl}/definitions`).then(data => {
-      if (Array.isArray(data.flags)) {
-        store.oreDefinitions = data.flags;
-        applyDefinitionOptions(store);
-      }
-    }).catch(error => console.error('[ORE Dashboard Filters] Could not load flag definitions', error));
+    loadDefinitions(store).catch(error => console.error('[ORE Dashboard Filters] Could not load flag definitions', error));
 
     let last = 0;
     watch(() => (store.submissions || []).map(item => Number(item.id)).join(','), async ids => {

@@ -62,6 +62,9 @@ class OreDashboardFiltersExtensions
             'features' => $prefs['features'],
             'columns' => $prefs['columns'],
             'appearance' => OreDashboardAccess::appearance($contextId),
+            // Shipped with the page so the dashboard needs no definitions API call.
+            'flagDefinitions' => $canViewFlags && OreDashboardFlagsController::definitionsTableExists()
+                ? OreDashboardFlagsController::definitions($contextId) : null,
             'flagsApiUrl' => $request->getDispatcher()->url(
                 $request,
                 Application::ROUTE_API,
@@ -77,28 +80,17 @@ class OreDashboardFiltersExtensions
                 ['inline' => true, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LATE]
             );
         }
+        // One bundle for all dashboard modules (resources/js/entries/dashboard.js).
+        // Each module checks the access flags in the inline config itself.
         $templateManager->addJavaScript(
-            'OreDashboardFlagIcons',
-            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-flag-icons.js?v=0.4.2.0",
-            ['inline' => false, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LATE]
-        );
-        $templateManager->addJavaScript(
-            'OreDashboardFiltersV3',
-            "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-v3.js?v=0.4.2.0",
+            'OreDashboardFiltersDashboard',
+            $plugin->assetUrl($request, 'ore-dashboard.js'),
             ['inline' => false, 'contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
         );
-        if ($canViewFlags && OreDashboardAccess::appearance($contextId)['showWorkflowFlag']) {
-            $templateManager->addJavaScript(
-                'OreDashboardWorkflowFlag',
-                "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-workflow-flag.js?v=0.4.2.1",
-                ['inline' => false, 'contexts' => ['backend'],
-                 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
-            );
-        }
         // Scoped dashboard layout CSS. Load as a proper stylesheet after OJS's
         // build.css, so plugin cells use the native border tokens and the
         // dashboard table scrolls internally without squeezing its text.
-        $cssUrl = "{$request->getBaseUrl()}/{$plugin->getPluginPath()}/public/build/ore-dashboard-layout.css?v=0.4.2.0";
+        $cssUrl = $plugin->assetUrl($request, 'ore-dashboard-layout.css');
         $templateManager->addHeader(
             'OreDashboardFiltersV36Layout',
             '<link rel="stylesheet" href="' . htmlspecialchars($cssUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">',
